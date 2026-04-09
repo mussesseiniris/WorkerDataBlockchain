@@ -1,0 +1,76 @@
+# WorkDataBlockchain
+
+A blockchain-based proof-of-concept platform that gives workers ownership and control over their personal and professional data. Employers must submit access requests to view worker data, and all authorization events are recorded on the blockchain as an immutable audit trail.
+
+## Tech Stack
+
+**Frontend:** React, Next.js, TypeScript, Tailwind CSS
+
+**Backend:** ASP.NET Core (C#), PostgreSQL (hosted on Supabase), Supabase Auth
+
+**Blockchain:** 
+
+## Project Structure
+
+```
+worker-data-blockchain/
+  wdb-frontend/       ← Next.js frontend
+  wdb-backend/        ← ASP.NET Core backend
+  wdb-contracts/      ← to be initialized
+```
+
+## Prerequisites
+
+- Node.js >= 18
+- .NET SDK >= 10.0
+- Git
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-org/worker-data-blockchain.git
+cd worker-data-blockchain
+```
+
+### 2. Frontend
+
+```bash
+cd wdb-frontend
+npm install
+npm install @supabase/supabase-js   # Supabase Auth and Realtime client
+npm run dev
+```
+
+Open http://localhost:3000 in your browser.
+
+### 3. Backend
+
+```bash
+cd wdb-backend
+dotnet restore
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL   # PostgreSQL database ORM
+dotnet run
+```
+
+API runs at http://localhost:5000
+
+### 4. Smart Contracts (TBD)
+
+
+
+## Code Style
+
+This project uses Prettier and EditorConfig to enforce consistent formatting. Your IDE will pick up the rules automatically.
+
+- Indent: 2 spaces (4 spaces for C#)
+- Quotes: single quotes (frontend)
+- Semicolons: yes
+
+**Required VS Code extensions:**
+
+- Prettier - Code formatter (enable `Format On Save`)
+- EditorConfig for VS Code
+- ES7+ React/Redux/React-Native snippets
+- Tailwind CSS IntelliSense
