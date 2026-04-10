@@ -63,7 +63,24 @@ API runs at http://localhost:5258
 
 ### 4. Blockchain
 
+## Testing
 
+### 1. Frontend
+
+```bash
+cd wdb-frontend
+npm test
+```
+### 2. Backend
+
+```bash
+cd worker-data-blockchain
+dotnet test
+```
+
+## CI
+
+GitHub Actions automatically runs backend and frontend tests when code is pushed to `main` or a pull request is opened against `main`.
 
 ## Code Style
 
@@ -79,3 +96,5 @@ This project uses Prettier and EditorConfig to enforce consistent formatting. Yo
 - EditorConfig for VS Code
 - ES7+ React/Redux/React-Native snippets
 - Tailwind CSS IntelliSense
+
+
