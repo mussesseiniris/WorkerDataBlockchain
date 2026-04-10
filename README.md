@@ -39,7 +39,6 @@ cd worker-data-blockchain
 ```bash
 cd wdb-frontend
 npm install
-npm install @supabase/supabase-js   # Supabase Auth and Realtime client
 npm run dev
 ```
 
@@ -50,11 +49,17 @@ Open http://localhost:3000 in your browser.
 ```bash
 cd wdb-backend
 dotnet restore
-dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL   # PostgreSQL database ORM
+dotnet run
+```
+Before running, create `appsettings.Development.json` by copying the connection string from `appsettings.json` and replacing `[YOUR-PASSWORD]` with the real database password. The password is in the slack chatbox. This file is gitignored and should not be committed.
+
+Then run:
+
+```bash
 dotnet run
 ```
 
-API runs at http://localhost:5000
+API runs at http://localhost:5258
 
 ### 4. Smart Contracts (TBD)
 
