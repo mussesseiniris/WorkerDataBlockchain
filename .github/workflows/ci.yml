@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend(.Net)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+            dotnet-version: "10.0.x"
+      
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore 
+
+      - name: Test
+        run: dotnet test --no-build
+
+  frontend:
+    name: Frontend(Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+            working-directory: wdb-frontend
+
+    
+    steps:
+     - uses: actions/checkout@v5
+     - name: Setup Node.js
+       uses: actions/setup-node@v5
+       with: 
+             node-version: "18"
+    
+     - name: Install
+       run: npm ci
+    
+     - name: Test
+       run: npm test
+
+
+      
+
+
+
+
+   
