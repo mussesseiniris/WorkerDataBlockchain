@@ -16,7 +16,7 @@ A blockchain-based proof-of-concept platform that gives workers ownership and co
 worker-data-blockchain/
   wdb-frontend/       ← Next.js frontend
   wdb-backend/        ← ASP.NET Core backend
-  wdb-contracts/      ← to be initialized
+  wdb-blockchain/      ← to be initialized
 ```
 
 ## Prerequisites
@@ -30,7 +30,7 @@ worker-data-blockchain/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/worker-data-blockchain.git
+git clone https://github.com/mussesseiniris/WorkerDataBlockchain.git
 cd worker-data-blockchain
 ```
 
@@ -61,7 +61,7 @@ dotnet run
 
 API runs at http://localhost:5258
 
-### 4. Smart Contracts (TBD)
+### 4. Blockchain
 
 
 
