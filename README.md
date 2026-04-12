@@ -61,6 +61,8 @@ dotnet run
 
 API runs at http://localhost:5258
 
+Swagger UI is available at http://localhost:5258/swagger (development only)
+
 ### 4. Blockchain
 
 ## Testing
