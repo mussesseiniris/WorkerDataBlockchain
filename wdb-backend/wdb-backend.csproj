@@ -5,7 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>wdb_backend</RootNamespace>
+    <!-- Generate XML file from /// comments, required for Swagger to display them -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Suppress warnings for missing XML comments on public members -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
 
