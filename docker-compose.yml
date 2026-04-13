@@ -1,0 +1,16 @@
+services:
+  wdb-backend:
+    build: ./wdb-backend
+    ports:
+      - "5258:5258"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5258
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+    
+  wdb-frontend:
+    build: ./wdb-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - wdb-backend
