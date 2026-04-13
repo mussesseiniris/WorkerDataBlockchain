@@ -30,4 +30,9 @@ public class WorkerController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(worker);
     }
+
+    public async Task<ActionResult<Permission>> GetRequests(int workerid)
+    {
+        
+    }
 }
