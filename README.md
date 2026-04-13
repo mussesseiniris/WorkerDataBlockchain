@@ -21,9 +21,12 @@ worker-data-blockchain/
 
 ## Prerequisites
 
-- Node.js >= 18
+To run the application:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+To run tests locally:
 - .NET SDK >= 10.0
-- Git
+- Node.js >= 18
 
 ## Getting Started
 
@@ -34,46 +37,68 @@ git clone https://github.com/mussesseiniris/WorkerDataBlockchain.git
 cd worker-data-blockchain
 ```
 
-### 2. Frontend
+### 2. Set up environment variables
+
+Create a `.env` file in the root directory:
 
 ```bash
-cd wdb-frontend
-npm install
-npm run dev
+cp .env.example .env
 ```
 
-Open http://localhost:3000 in your browser.
+Open `.env` and fill in the database password (find it in the Slack chatbox):
 
-### 3. Backend
+```
+CONNECTION_STRING=Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.kkrkhfzsoudhgjnyxxuv;Password=YOUR-PASSWORD;SSL Mode=Require;Trust Server Certificate=true
+```
+
+### 3. Start the application
 
 ```bash
-cd wdb-backend
-dotnet restore
-dotnet run
-```
-Before running, create `appsettings.Development.json` by copying the connection string from `appsettings.json` and replacing `[YOUR-PASSWORD]` with the real database password. The password is in the slack chatbox. This file is gitignored and should not be committed.
-
-Then run:
-
-```bash
-dotnet run
+docker compose up
 ```
 
-API runs at http://localhost:5258
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5258
+- Swagger UI: http://localhost:5258/swagger (development only)
 
-Swagger UI is available at http://localhost:5258/swagger (development only)
+#### Useful Docker commands
 
-### 4. Blockchain
+| Command | Description |
+|---|---|
+| `docker compose up` | Start all services |
+| `docker compose up --build` | Rebuild and start (use this after pulling new changes) |
+| `docker compose down` | Stop and remove containers |
 
 ## Testing
 
-### 1. Frontend
+Tests run locally and do not require Docker or a database connection.
+
+### 1. Install test dependencies
+
+**Mac** (requires [Homebrew](https://brew.sh)):
+
+```bash
+brew install node
+brew install --cask dotnet-sdk
+```
+
+**Windows** (winget is built into Windows 10/11):
+
+```bash
+winget install OpenJS.NodeJS
+winget install Microsoft.DotNet.SDK.10
+```
+
+### 2. Run tests
+
+**Frontend:**
 
 ```bash
 cd wdb-frontend
 npm test
 ```
-### 2. Backend
+
+**Backend:**
 
 ```bash
 cd worker-data-blockchain
@@ -98,5 +123,3 @@ This project uses Prettier and EditorConfig to enforce consistent formatting. Yo
 - EditorConfig for VS Code
 - ES7+ React/Redux/React-Native snippets
 - Tailwind CSS IntelliSense
-
-
