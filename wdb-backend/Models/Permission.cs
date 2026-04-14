@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using wdb_backend.Common;
+
 namespace wdb_backend.Models;
 
 /// <summary>
@@ -48,7 +50,7 @@ public class Permission
     /// The permission's status such as pending/approved/rejected.
     /// </summary>
     [Column("status")]
-     public required int Status { get; set; }
+     public required PermissionStatus Status { get; set; }
 
 }
 
