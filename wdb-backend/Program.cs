@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using wdb_backend.Data;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,10 @@ builder.Services.AddControllers();
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("SupabaseConnection")));
+
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 
 var app = builder.Build();
