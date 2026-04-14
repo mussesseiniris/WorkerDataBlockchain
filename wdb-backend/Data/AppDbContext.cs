@@ -16,4 +16,6 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<Worker> Workers { get; set; }
 
+    public DbSet<Employer> Employers { get; set; }
+
 }
