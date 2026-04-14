@@ -28,4 +28,9 @@ public class WorkerController:ControllerBase
         await _context.SaveChangesAsync();
         return Ok(worker);
     }
+
+    public async Task<ActionResult<Permission>> GetRequests(Worker worker)
+    {
+        //Each request row is based on employerid
+    }
 }
