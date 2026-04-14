@@ -43,12 +43,12 @@ public class Permission
     /// </summary>
     [Column("expiry_date")]
     public DateTime ExpiryDate { get; set; }
-    
+
     /// <summary>
-    /// The permission's status such as pending/approved/rejected. 
+    /// The permission's status such as pending/approved/rejected.
     /// </summary>
-    [Column("status")]    
-     public required string Status { get; set; }
+    [Column("status")]
+     public required int Status { get; set; }
 
 }
-    
+
