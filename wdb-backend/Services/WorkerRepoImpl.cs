@@ -29,4 +29,9 @@ public class WorkerRepoImpl:IWorkerInfoRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task<WorkerInfo> GetByEmailAsync(string workerEmail, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

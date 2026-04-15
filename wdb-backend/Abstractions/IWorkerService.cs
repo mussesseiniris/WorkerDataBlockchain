@@ -14,5 +14,4 @@ public interface IWorkerService
 
     Task<Worker> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
 
-    Task<WorkerInfo> GetWorkerInfoByIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 }
