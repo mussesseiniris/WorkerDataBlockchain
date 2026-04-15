@@ -19,7 +19,7 @@ public class WorkerServiceImpl : IWorkerService
 
     public async Task<Worker> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-      
+
         var resultWorker =await _workerRepository.GetByEmailAsync(email, default)??throw new KeyNotFoundException();
         return resultWorker;
     }
@@ -39,8 +39,4 @@ public class WorkerServiceImpl : IWorkerService
         throw new NotImplementedException();
     }
 
-    public Task<WorkerInfo> GetWorkerInfoByIdAsync(Guid workerId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
