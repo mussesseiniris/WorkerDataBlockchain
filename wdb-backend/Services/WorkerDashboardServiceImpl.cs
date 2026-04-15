@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 
@@ -12,8 +13,28 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
         _dbContext = dbContext;
     }
 
-    public Task<object?> GetDashboardAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<object?> GetDashboardAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult<object?>(null);
+        var worker = await _dbContext.Workers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == workerId, cancellationToken);
+
+        if (worker == null)
+        {
+            return null;
+        }
+
+        return new
+        {
+            worker = new
+            {
+                id = worker.Id,
+                name = worker.Name,
+                email = worker.Email,
+                verified = worker.Verified
+            },
+            latestPermissions = new List<object>(),
+            blockchainRecords = new List<object>()
+        };
     }
 }
