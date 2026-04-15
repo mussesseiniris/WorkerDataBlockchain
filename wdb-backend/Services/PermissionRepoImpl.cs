@@ -25,7 +25,7 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
