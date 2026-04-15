@@ -5,6 +5,11 @@ namespace wdb_backend.Services;
 
 public class PermissionServiceImpl:IPermissionService
 {
+    private readonly IPermissionRepository _permissionRepository;
+    public PermissionServiceImpl(IPermissionRepository permissionRepository)
+    {
+        _permissionRepository = permissionRepository;
+    }
     public Task CreateAllByRequestAsync(Request request, IEnumerable<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
