@@ -10,6 +10,6 @@ public interface IRequestService
 
     Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 
-    Task<LinkedList<Request>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
+    Task<List<Request>> GetAllByRequestIdAsync(Guid workerid, Guid requestId, CancellationToken cancellationToken = default);
 
 }
