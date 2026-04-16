@@ -15,7 +15,7 @@ public class RequestRepoImpl : IRequestRepository
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

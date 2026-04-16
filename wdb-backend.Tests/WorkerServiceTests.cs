@@ -34,14 +34,12 @@ public class WorkerServiceTests
         };
 
         //requests
-        var fakeRequest1 = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
-        var fakeRequest2 = new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"}; 
-        var fakeRequest3 = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
-
-        var fakeRequests = new LinkedList<Request>{};
-        fakeRequests.AddLast(fakeRequest1);
-        fakeRequests.AddLast(fakeRequest2);
-        fakeRequests.AddLast(fakeRequest3);
+        var fakeRequests = new List<Request>{
+            new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"},
+            new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"},
+            new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"}
+        };
+       
         
 
         
@@ -53,7 +51,7 @@ public class WorkerServiceTests
         var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
         
         //Get requets using request id from permission rows 
-        var requestResult = await requestService.GetAllByWorkerIdAsync(workerId);
+        var requestResult = await requestService.GetAllByRequestIdAsync(workerId, requestId);
 
         
         // Assert: the returned data is a list of permissions/request
