@@ -17,10 +17,13 @@ public class WorkerServiceTests
         var mockPermissionRepo = new Mock<IPermissionRepository>();
         var permissionService = new PermissionServiceImpl(mockPermissionRepo.Object);
 
-        // var requestService = new RequestServiceImpl();
-        //add worker
+        var mockRequestRepo = new Mock<IRequestRepository>();
+        var requestService = new RequestServiceImpl(mockRequestRepo.Object);
+
         var workerId = Guid.NewGuid();
         var requestId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
+
         //permissions
         var fakePermissions = new List<Permission>
         {
@@ -29,22 +32,33 @@ public class WorkerServiceTests
             new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = (PermissionStatus)1, RequestId = requestId}
 
         };
+
         //requests
+        var fakeRequest1 = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
+        var fakeRequest2 = new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"}; 
+        var fakeRequest3 = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
+
+        var fakeRequests = new LinkedList<Request>{};
+        fakeRequests.AddLast(fakeRequest1);
+        fakeRequests.AddLast(fakeRequest2);
+        fakeRequests.AddLast(fakeRequest3);
+        
 
         
         mockPermissionRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakePermissions);
+        mockRequestRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakeRequests);
 
         // Act: 
         //Get permission based on workerid and filter to pending status
         var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
         
         //Get requets using request id from permission rows 
-        // var requestResult = await requestService.GetAllByWorkerIdAsync(workerId);
+        var requestResult = await requestService.GetAllByWorkerIdAsync(workerId);
 
         
-        // Assert: the returned data is a list of permissions
+        // Assert: the returned data is a list of permissions/request
         var returnedPermissions = Assert.IsType<List<Permission>>(permissionResult);
-        // var returnedRequests = Assert.IsType<List<Request>>(requestResult);
+        var returnedRequests = Assert.IsType<List<Request>>(requestResult);
         
         // Assert: the correct number of permission retrieved
         Assert.Equal(2, returnedPermissions.Count);
@@ -52,8 +66,11 @@ public class WorkerServiceTests
         // Assert: the permission status of rows is pending
         Assert.All(returnedPermissions, returnedPermission => Assert.True(returnedPermission.Status == 0));
         
-        // Assert: a row of permission has correct workerid, employerid, expiry date, request reason, infoid
-
+        // Assert: requests have correct requestId
+        Assert.All(returnedRequests, returnedRequest => Assert.True(returnedRequest.Id == requestId));
+       
+       // Assert: correct number of requests retrieved
+       Assert.Equal(2, returnedRequests.Count);
 
     }
 }

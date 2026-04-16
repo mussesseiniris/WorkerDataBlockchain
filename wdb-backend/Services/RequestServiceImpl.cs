@@ -5,6 +5,13 @@ namespace wdb_backend.Services;
 
 public class RequestServiceImpl:IRequestService
 {
+    private readonly IRequestRepository _requestRepository;
+
+    public RequestServiceImpl(IRequestRepository requestRepository)
+    {
+        _requestRepository = requestRepository;
+    }
+
     public Task<Request> CreateAsync(Guid employerId, Guid workerId, Request request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
