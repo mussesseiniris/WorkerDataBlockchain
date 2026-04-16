@@ -9,4 +9,7 @@ public interface IRequestService
     Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default);
 
     Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
+
+    Task<LinkedList<Request>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
+
 }
