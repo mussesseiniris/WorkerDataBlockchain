@@ -12,5 +12,5 @@ public interface IPermissionService
 
     Task<Permission> GetByIdAsync(Guid permissionId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
+    Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, int Status = -1, CancellationToken cancellationToken = default);
 }

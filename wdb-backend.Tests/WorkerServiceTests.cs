@@ -5,6 +5,7 @@ using wdb_backend.Models;
 using wdb_backend.Services;
 using wdb_backend.Abstractions;
 using System.Security;
+using wdb_backend.Common;
 namespace wdb_backend.Tests;
 
 public class WorkerServiceTests
@@ -16,7 +17,7 @@ public class WorkerServiceTests
         var mockPermissionRepo = new Mock<IPermissionRepository>();
         var permissionService = new PermissionServiceImpl(mockPermissionRepo.Object);
 
-        var requestService = new RequestServiceImpl();
+        // var requestService = new RequestServiceImpl();
         //add worker
         var workerId = Guid.NewGuid();
         var requestId = Guid.NewGuid();
@@ -25,7 +26,7 @@ public class WorkerServiceTests
         {
             new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = 0, RequestId = requestId},
             new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = 0, RequestId = requestId},
-            new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = 0, RequestId = requestId}
+            new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = (PermissionStatus)1, RequestId = requestId}
 
         };
         //requests
@@ -35,7 +36,7 @@ public class WorkerServiceTests
 
         // Act: 
         //Get permission based on workerid and filter to pending status
-        var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId);
+        var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
         
         //Get requets using request id from permission rows 
         // var requestResult = await requestService.GetAllByWorkerIdAsync(workerId);
@@ -46,7 +47,7 @@ public class WorkerServiceTests
         // var returnedRequests = Assert.IsType<List<Request>>(requestResult);
         
         // Assert: the correct number of permission retrieved
-        Assert.Equal(3, returnedPermissions.Count);
+        Assert.Equal(2, returnedPermissions.Count);
         
         // Assert: the permission status of rows is pending
         Assert.All(returnedPermissions, returnedPermission => Assert.True(returnedPermission.Status == 0));
