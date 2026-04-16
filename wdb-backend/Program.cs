@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using wdb_backend.Data;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Data;
+using wdb_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,16 +20,20 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddControllers();
-
-
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("SupabaseConnection")));
 
+
+//builder.Services.AddDbContextPool<AppDbContext>(opt =>
+//    opt.UseNpgsql(
+//        builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
 
 
 var app = builder.Build();

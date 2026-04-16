@@ -24,6 +24,22 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
             return null;
         }
 
+        var latestRequests = await (
+            from r in _dbContext.Requests.AsNoTracking()
+            join e in _dbContext.Employers.AsNoTracking()
+                on r.EmployerId equals e.Id
+            where r.WorkerId == workerId
+            orderby r.CreatedAt descending
+            select new
+            {
+                requestId = r.Id,
+                employerId = r.EmployerId,
+                employerName = e.Name,
+                createdAt = r.CreatedAt,
+                reason = r.Reason
+            }
+        ).Take(5).ToListAsync(cancellationToken);
+
         return new
         {
             worker = new
@@ -33,7 +49,7 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
                 email = worker.Email,
                 verified = worker.Verified
             },
-            latestPermissions = new List<object>(),
+            latestRequests = latestRequests,
             blockchainRecords = new List<object>()
         };
     }
