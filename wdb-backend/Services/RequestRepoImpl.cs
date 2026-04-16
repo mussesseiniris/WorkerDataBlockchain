@@ -20,8 +20,5 @@ public class RequestRepoImpl : IRequestRepository
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Request>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+
 }
