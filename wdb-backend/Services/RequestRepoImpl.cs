@@ -5,10 +5,11 @@ namespace wdb_backend.Services;
 
 public class RequestRepoImpl : IRequestRepository
 {
-    public Task AddAsync(Guid employerId, Guid workerId, Request request, CancellationToken cancellationToken = default)
+    public Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
+    
 
     public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {
