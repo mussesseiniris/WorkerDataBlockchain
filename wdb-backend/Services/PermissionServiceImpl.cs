@@ -1,4 +1,5 @@
 using wdb_backend.Abstractions;
+using wdb_backend.Common;
 using wdb_backend.Models;
 
 namespace wdb_backend.Services;
@@ -30,8 +31,14 @@ public class PermissionServiceImpl:IPermissionService
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyList<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, int Status = -1, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+       var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId)??throw new KeyNotFoundException();
+       if (Status != -1)
+        {
+           result = result.Where(x => x.Status == (PermissionStatus)Status).ToList();
+        }
+       
+       return result;
     }
 }
