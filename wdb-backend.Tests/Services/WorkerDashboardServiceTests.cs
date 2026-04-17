@@ -219,11 +219,11 @@ public class WorkerDashboardServiceTests
 
         var json = JsonSerializer.Serialize(result);
 
-        // 只返回 5 条 request
+        // Only 5 requests should be returned
         var requestCount = json.Split("requestId").Length - 1;
         Assert.Equal(5, requestCount);
 
-        // 最新的应保留，最旧的一条（Reason 5）应被截掉
+        // The newest five should be kept, and the oldest one (Reason 5) should be excluded
         Assert.Contains("Reason 0", json);
         Assert.Contains("Reason 1", json);
         Assert.Contains("Reason 2", json);
@@ -231,10 +231,42 @@ public class WorkerDashboardServiceTests
         Assert.Contains("Reason 4", json);
         Assert.DoesNotContain("Reason 5", json);
 
-        // 顺序应是最新在前：Reason 0 在 Reason 4 前面
+        // The requests should be ordered from newest to oldest: Reason 0 should appear before Reason 4
         var index0 = json.IndexOf("Reason 0", StringComparison.Ordinal);
         var index4 = json.IndexOf("Reason 4", StringComparison.Ordinal);
 
         Assert.True(index0 < index4);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_ShouldReturnEmptyBlockchainRecords_WhenNoBlockchainDataExists()
+    {
+        // Arrange
+        using var dbContext = CreateDbContext(nameof(GetDashboardAsync_ShouldReturnEmptyBlockchainRecords_WhenNoBlockchainDataExists));
+
+        var workerId = Guid.NewGuid();
+
+        dbContext.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "user",
+            Email = "user@example.com",
+            Verified = true,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var service = new WorkerDashboardServiceImpl(dbContext);
+
+        // Act
+        var result = await service.GetDashboardAsync(workerId);
+
+        // Assert
+        Assert.NotNull(result);
+
+        var json = JsonSerializer.Serialize(result);
+
+        Assert.Contains("\"blockchainRecords\":[]", json);
     }
 }
