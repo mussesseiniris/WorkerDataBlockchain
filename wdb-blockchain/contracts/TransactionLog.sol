@@ -20,7 +20,7 @@ contract TransactionLog {
     Action action
   );
 
-  // emits the log event
+  // emits the log event / writing to blockchain
   function logTransaction(
     address employer,
     address worker,
