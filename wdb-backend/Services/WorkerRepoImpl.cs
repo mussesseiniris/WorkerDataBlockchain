@@ -3,7 +3,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class WorkerRepoImpl:IWorkerInfoRepository
+public class WorkerRepoImpl : IWorkerRepository
 {
     public Task<WorkerInfo> GetOneAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
     {
@@ -25,7 +25,32 @@ public class WorkerRepoImpl:IWorkerInfoRepository
         throw new NotImplementedException();
     }
 
-    public Task<WorkerInfo> DeleteAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
+    public Task<WorkerInfo> DeleteAsync(Guid workerId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Worker> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task AddAsync(Worker worker, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Worker> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<WorkerInfo> GetWorkerInfoById(Guid workerId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

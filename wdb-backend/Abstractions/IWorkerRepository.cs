@@ -17,9 +17,10 @@ public interface IWorkerRepository
     Task<Worker> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     // delete worker by email
-    Task<Worker> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
-
-    // get worker_info by work id
+    public Task<WorkerInfo> DeleteAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
     Task<WorkerInfo> GetWorkerInfoById(Guid workerId, CancellationToken cancellationToken = default);
 
 }
