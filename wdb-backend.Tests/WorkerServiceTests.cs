@@ -83,27 +83,27 @@ public class WorkerServiceTests
         var workerId = Guid.NewGuid();
         var requestId = Guid.NewGuid();
         var permissionId = Guid.NewGuid();
+        
 
-        var fakePermission = new Permission {Id = permissionId, WorkerId = workerId, Status = 0, LastUpdatedAt = DateTime.UtcNow, RequestId = requestId};
+        var fakePermission = new Permission {Id = permissionId, WorkerId = workerId, Status = 0, LastUpdatedAt = DateTime.UtcNow.AddSeconds(-1), RequestId = requestId};
         var fakePermissionUpdate = new Permission {Id = permissionId, WorkerId = workerId, Status = (PermissionStatus)1, LastUpdatedAt = DateTime.UtcNow, RequestId = requestId};
+        var originalTimestamp = fakePermission.LastUpdatedAt;
 
-        mockPermissionRepo.Setup(r => r.GetOneAsync(workerId, default)).ReturnsAsync(fakePermission);
+        mockPermissionRepo.Setup(r => r.GetOneAsync(permissionId, default)).ReturnsAsync(fakePermission);
         mockPermissionRepo.Setup(r => r.UpdateAsync(permissionId, fakePermission, default)).ReturnsAsync(fakePermissionUpdate);
 
         //Act:
-        var permissionResult = await permissionService.GetByIdAsync(workerId);
-        var updateResult = await permissionService.UpdateAsync(permissionId, fakePermissionUpdate);
+        var updateResult = await permissionService.UpdateAsync(permissionId, 1);
 
 
         //Assert:
-        var returnedPermission = Assert.IsType<Permission>(permissionResult);
         var returnedPermissionUpdate = Assert.IsType<Permission>(updateResult);
 
         //test permission status is approve/disapprove
         Assert.True(returnedPermissionUpdate.Status == (PermissionStatus)1);
 
         //test permission last_updated_at is updated
-        Assert.True(returnedPermissionUpdate.LastUpdatedAt > returnedPermission.LastUpdatedAt);
-        
+        Assert.True(returnedPermissionUpdate.LastUpdatedAt > originalTimestamp);
+
     }
 }

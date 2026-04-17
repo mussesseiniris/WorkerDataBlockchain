@@ -1,3 +1,4 @@
+using Microsoft.Net.Http.Headers;
 using wdb_backend.Abstractions;
 using wdb_backend.Common;
 using wdb_backend.Models;
@@ -16,9 +17,13 @@ public class PermissionServiceImpl:IPermissionService
         throw new NotImplementedException();
     }
 
-    public Task<Permission> UpdateAsync(Guid requestId, Permission permission, CancellationToken cancellationToken = default)
+    public async Task<Permission> UpdateAsync(Guid permissionId, int status = 0, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var permission = await _permissionRepository.GetOneAsync(permissionId)??throw new KeyNotFoundException();
+        permission.Status = (PermissionStatus)status;
+        permission.LastUpdatedAt = DateTime.UtcNow;
+        var result = await _permissionRepository.UpdateAsync(permissionId, permission)??throw new KeyNotFoundException();
+        return result;
     }
 
     public Task<IReadOnlyList<Permission>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)

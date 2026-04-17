@@ -8,7 +8,7 @@ public interface IPermissionRepository
     Task AddAllByRequestAsync(Request request, LinkedList<WorkerInfo> workerInfos, CancellationToken cancellationToken = default);
 
     // update status
-    Task<Permission> UpdateAsync(Guid requestId, Permission permission, CancellationToken cancellationToken = default);
+    Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default);
 
     // get all permissions of specific request id
     Task<LinkedList<Permission>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);

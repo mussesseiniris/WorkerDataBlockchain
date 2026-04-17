@@ -10,7 +10,7 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public async Task<Permission> UpdateAsync(Guid requestId, Permission permission, CancellationToken cancellationToken = default)
+    public Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -20,7 +20,7 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public async Task<Permission> GetOneAsync(Guid permissionId, CancellationToken cancellationToken = default)
+    public Task<Permission> GetOneAsync(Guid permissionId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
