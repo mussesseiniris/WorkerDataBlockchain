@@ -10,7 +10,9 @@ using wdb_backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// OpenAPI / Swagger
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
