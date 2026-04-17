@@ -18,12 +18,15 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
+// registration and loing services
+builder.Services.AddInfrastructure(builder.Configuration);
+
 builder.Services.AddControllers();
 
 
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("SupabaseConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
