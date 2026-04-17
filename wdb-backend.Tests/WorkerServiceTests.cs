@@ -6,6 +6,7 @@ using wdb_backend.Services;
 using wdb_backend.Abstractions;
 using System.Security;
 using wdb_backend.Common;
+using Microsoft.VisualBasic;
 namespace wdb_backend.Tests;
 
 public class WorkerServiceTests
@@ -39,9 +40,6 @@ public class WorkerServiceTests
             new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"},
             new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"}
         };
-       
-        
-
         
         mockPermissionRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakePermissions);
         mockRequestRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakeRequests);
@@ -67,8 +65,45 @@ public class WorkerServiceTests
         // Assert: requests have correct requestId
         Assert.All(returnedRequests, returnedRequest => Assert.True(returnedRequest.Id == requestId));
        
-       // Assert: correct number of requests retrieved
-       Assert.Equal(2, returnedRequests.Count);
+        // Assert: correct number of requests retrieved
+        Assert.Equal(2, returnedRequests.Count);
 
+    }
+
+     [Fact]
+    async public Task ChangePermissionStatusTest()
+    {
+        //permission id gets passed from frontend to backend 
+        //goes to controller layer, calls the service layer, calls the repo layer
+
+        //Arrange:
+        var mockPermissionRepo = new Mock<IPermissionRepository>();
+        var permissionService = new PermissionServiceImpl(mockPermissionRepo.Object);
+        
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+
+        var fakePermission = new Permission {Id = permissionId, WorkerId = workerId, Status = 0, LastUpdatedAt = DateTime.UtcNow, RequestId = requestId};
+        var fakePermissionUpdate = new Permission {Id = permissionId, WorkerId = workerId, Status = (PermissionStatus)1, LastUpdatedAt = DateTime.UtcNow, RequestId = requestId};
+
+        mockPermissionRepo.Setup(r => r.GetOneAsync(workerId, default)).ReturnsAsync(fakePermission);
+        mockPermissionRepo.Setup(r => r.UpdateAsync(permissionId, fakePermission, default)).ReturnsAsync(fakePermissionUpdate);
+
+        //Act:
+        var permissionResult = await permissionService.GetByIdAsync(workerId);
+        var updateResult = await permissionService.UpdateAsync(permissionId, fakePermissionUpdate);
+
+
+        //Assert:
+        var returnedPermission = Assert.IsType<Permission>(permissionResult);
+        var returnedPermissionUpdate = Assert.IsType<Permission>(updateResult);
+
+        //test permission status is approve/disapprove
+        Assert.True(returnedPermissionUpdate.Status == (PermissionStatus)1);
+
+        //test permission last_updated_at is updated
+        Assert.True(returnedPermissionUpdate.LastUpdatedAt > returnedPermission.LastUpdatedAt);
+        
     }
 }
