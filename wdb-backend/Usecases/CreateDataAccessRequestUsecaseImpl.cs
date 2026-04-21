@@ -6,11 +6,11 @@ namespace wdb_backend.Usecases;
 /// <summary>
 /// Orchestrates RequestService and PermissionService to create a data access request.
 /// </summary>
-public class CreateDataAccessRequestImpl : ICreateDataAccessRequest
+public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequest
 {
     private readonly IPermissionService _permService;
     private readonly IRequestService _requService;
-    public CreateDataAccessRequestImpl(IRequestService requService, IPermissionService permService)
+    public CreateDataAccessRequestUsecaseImpl(IRequestService requService, IPermissionService permService)
     {
         _requService = requService;
         _permService = permService;
