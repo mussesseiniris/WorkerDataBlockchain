@@ -19,9 +19,13 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default)
+    public async Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var item = await _dbContext.Permissions.FirstOrDefaultAsync(x => x.Id == permissionId, cancellationToken)?? throw new KeyNotFoundException();
+        item.Status = permission.Status;
+        item.LastUpdatedAt = permission.LastUpdatedAt;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return item;
     }
 
     public Task<LinkedList<Permission>> GetAllByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
@@ -29,14 +33,15 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public Task<Permission> GetOneAsync(Guid permissionId, CancellationToken cancellationToken = default)
+    public async Task<Permission> GetOneAsync(Guid permissionId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _dbContext.Permissions.FirstOrDefaultAsync(x => x.Id == permissionId, cancellationToken)?? throw new KeyNotFoundException();
+        return result;
     }
 
     public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        var result = await _dbContext.Permissions.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken);
+        var result = await _dbContext.Permissions.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken)?? throw new KeyNotFoundException();
         return result;
     }
 }
