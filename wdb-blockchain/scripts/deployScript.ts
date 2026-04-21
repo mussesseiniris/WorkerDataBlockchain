@@ -37,8 +37,11 @@ async function main() {
         fs.readFileSync(appSettingsPath, "utf8")
     );
 
+
+
     //update contract address
     appSettings.Blockchain.ContractAddress = address;
+    appSettings.Blockchain.AbiPath = "../wdb-blockchain/artifacts/contracts/TransactionLog.sol/TransactionLog.json";
 
     //write to appSettings.json
     fs.writeFileSync(
