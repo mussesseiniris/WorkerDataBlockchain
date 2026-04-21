@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using wdb_backend.Data;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
+using wdb_backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +32,10 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
+builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
+builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
 
 var app = builder.Build();
 app.MapControllers();
