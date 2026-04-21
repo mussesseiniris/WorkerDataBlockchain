@@ -27,11 +27,11 @@ public class RequestServiceImpl:IRequestService
         throw new NotImplementedException();
     }
 
-    public async Task<List<Request>> GetAllByRequestIdAsync(Guid workerId, Guid requestId, CancellationToken cancellationToken = default)
+    public async Task <Request> GetAllByRequestIdAsync(Guid workerId, Guid requestId, CancellationToken cancellationToken = default)
     {
         var result = await _requestRepository.GetAllByWorkerIdAsync(workerId)??throw new KeyNotFoundException();
-        result = result.Where(x => x.Id == requestId).ToList();
-        return result;
+        var request = result.FirstOrDefault(x => x.Id == requestId)?? throw new KeyNotFoundException();
+        return request;
     }
 
 }

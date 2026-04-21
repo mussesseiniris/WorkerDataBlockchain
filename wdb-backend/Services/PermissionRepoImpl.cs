@@ -1,10 +1,17 @@
 using wdb_backend.Abstractions;
+using wdb_backend.Data;
 using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
 public class PermissionRepoImpl:IPermissionRepository
 {
+    private readonly AppDbContext _dbContext;
+
+    public PermissionRepoImpl(AppDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
     public Task AddAllByRequestAsync(Request request, LinkedList<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

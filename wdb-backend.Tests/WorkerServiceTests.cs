@@ -7,6 +7,9 @@ using wdb_backend.Abstractions;
 using System.Security;
 using wdb_backend.Common;
 using Microsoft.VisualBasic;
+using wdb_backend.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 namespace wdb_backend.Tests;
 
 public class WorkerServiceTests
@@ -38,7 +41,6 @@ public class WorkerServiceTests
         var fakeRequests = new List<Request>{
             new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"},
             new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"},
-            new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"}
         };
         
         mockPermissionRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakePermissions);
@@ -54,7 +56,7 @@ public class WorkerServiceTests
         
         // Assert: the returned data is a list of permissions/request
         var returnedPermissions = Assert.IsType<List<Permission>>(permissionResult);
-        var returnedRequests = Assert.IsType<List<Request>>(requestResult);
+        var returnedRequests = Assert.IsType<Request>(requestResult);
         
         // Assert: the correct number of permission retrieved
         Assert.Equal(2, returnedPermissions.Count);
@@ -63,10 +65,7 @@ public class WorkerServiceTests
         Assert.All(returnedPermissions, returnedPermission => Assert.True(returnedPermission.Status == 0));
         
         // Assert: requests have correct requestId
-        Assert.All(returnedRequests, returnedRequest => Assert.True(returnedRequest.Id == requestId));
-       
-        // Assert: correct number of requests retrieved
-        Assert.Equal(2, returnedRequests.Count);
+        Assert.True(returnedRequests.Id == requestId);
 
     }
 
@@ -106,4 +105,83 @@ public class WorkerServiceTests
         Assert.True(returnedPermissionUpdate.LastUpdatedAt > originalTimestamp);
 
     }
+
+    private static AppDbContext CreateDbContext(String dbName)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+        .UseInMemoryDatabase(dbName)
+        .Options;
+
+        return new AppDbContext(options);
+    }
+
+    [Fact]
+    public async Task GetAllWorkerById_ShouldReturnPermission()
+    {
+        //Arrange
+        using var dbContext = CreateDbContext(nameof(GetAllWorkerById_ShouldReturnPermission));
+
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        var reason = "Because I want your data";
+
+        dbContext.Permissions.AddRange( 
+        new Permission
+        {
+            WorkerId = workerId,
+            RequestId = requestId,
+            Status = 0
+        }, 
+        new Permission
+        {
+            WorkerId = workerId,
+            RequestId = requestId,
+            Status = 0
+        },
+        new Permission
+        {
+            WorkerId = workerId,
+            RequestId = requestId,
+            Status = (PermissionStatus)1
+        }
+        );
+
+        dbContext.Requests.AddRange(
+        new Request
+        {
+          
+          WorkerId = workerId,
+          Reason = reason,
+          Id = requestId 
+        },
+        new Request
+        {
+            WorkerId = workerId,
+            Reason = "just because",
+            Id = Guid.NewGuid()
+        }
+        );
+
+        await dbContext.SaveChangesAsync();
+
+        var permissionRepo = new PermissionRepoImpl(dbContext);
+        var permissionService = new PermissionServiceImpl(permissionRepo);
+
+        var requestRepo = new RequestRepoImpl(dbContext);
+        var requestService = new RequestServiceImpl(requestRepo);
+
+        //Act
+        var resultPermission = await permissionService.GetAllByWorkerIdAsync(workerId);
+        var resultRequest = await requestService.GetAllByRequestIdAsync(workerId, requestId);
+
+        //Assert
+        Assert.All(resultPermission, returnedPermission => Assert.True(returnedPermission.Status == 0));
+        Assert.Equal(2, resultPermission.Count);
+
+        Assert.True(resultRequest.Id == requestId);
+        Assert.Equal(reason,resultRequest.Reason);
+    }
+
+
+
 }
