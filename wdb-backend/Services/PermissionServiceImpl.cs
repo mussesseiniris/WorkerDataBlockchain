@@ -17,12 +17,23 @@ public class PermissionServiceImpl:IPermissionService
         throw new NotImplementedException();
     }
 
-    public async Task<Permission> UpdateAsync(Guid permissionId, int status = 0, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Updates permission status and timestamp for given permission ID
+    /// </summary>
+    /// <param name="permissionId">The ID of given permission to update</param>
+    /// <param name="status">
+    /// Changes permission status:
+    /// 0 = Pending, 1 = Approve, 2 = Reject
+    /// </param>
+    /// <param name="cancellationToken">Token to cancel async operation</param>
+    /// <returns>Returns permission item with updated status and timestamp</returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public async Task<Permission> UpdateAsync(Guid permissionId, int status, CancellationToken cancellationToken = default)
     {
-        var permission = await _permissionRepository.GetOneAsync(permissionId)??throw new KeyNotFoundException();
+        var permission = await _permissionRepository.GetOneAsync(permissionId, cancellationToken)??throw new KeyNotFoundException();
         permission.Status = (PermissionStatus)status;
         permission.LastUpdatedAt = DateTime.UtcNow;
-        var result = await _permissionRepository.UpdateAsync(permissionId, permission)??throw new KeyNotFoundException();
+        var result = await _permissionRepository.UpdateAsync(permissionId, permission, cancellationToken);
         return result;
     }
 
@@ -50,7 +61,7 @@ public class PermissionServiceImpl:IPermissionService
     /// <exception cref="KeyNotFoundException">Thrown when no permissions are found for given worker ID </exception>
     public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, int Status = -1, CancellationToken cancellationToken = default)
     {
-       var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId)??throw new KeyNotFoundException();
+       var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId, cancellationToken)??throw new KeyNotFoundException();
        if (Status != -1)
         {
            result = result.Where(x => x.Status == (PermissionStatus)Status).ToList();
