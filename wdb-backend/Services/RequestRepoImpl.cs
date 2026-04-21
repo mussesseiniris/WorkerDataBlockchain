@@ -1,15 +1,26 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using wdb_backend.Abstractions;
+using wdb_backend.Data;
 using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
 public class RequestRepoImpl : IRequestRepository
 {
-    public Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
+
+    private readonly AppDbContext _context;
+    public RequestRepoImpl(AppDbContext context)
     {
-        throw new NotImplementedException();
+        _context = context;
     }
-    
+    public async Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
+    {
+        var request = new Request { EmployerId = employerId, WorkerId = workerId, Reason = reason };
+        _context.Requests.Add(request);
+        await _context.SaveChangesAsync(cancellationToken);
+        return request;
+    }
+
 
     public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {
