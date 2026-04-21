@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.Net.Http.Headers;
 using wdb_backend.Abstractions;
 using wdb_backend.Common;
@@ -31,6 +33,11 @@ public class PermissionServiceImpl:IPermissionService
     public async Task<Permission> UpdateAsync(Guid permissionId, int status, CancellationToken cancellationToken = default)
     {
         var permission = await _permissionRepository.GetOneAsync(permissionId, cancellationToken)??throw new KeyNotFoundException();
+        if (permission.Status == PermissionStatus.Pending)
+        {
+            throw new InvalidOperationException($"Permission {permissionId} cannot be udpated as it is no longer pending");
+        } 
+
         permission.Status = (PermissionStatus)status;
         permission.LastUpdatedAt = DateTime.UtcNow;
         var result = await _permissionRepository.UpdateAsync(permissionId, permission, cancellationToken);
