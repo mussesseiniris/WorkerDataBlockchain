@@ -182,6 +182,45 @@ public class WorkerServiceTests
         Assert.Equal(reason,resultRequest.Reason);
     }
 
+    [Fact]
+    public async Task Update_ChangePermissionStatus()
+    {
+       //Arrange
+        using var dbContext = CreateDbContext(nameof(GetAllWorkerById_ShouldReturnPermission));
+
+        var workerId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+        var originalTimestamp = DateTime.UtcNow.AddSeconds(-1);
+
+        dbContext.Permissions.AddRange( 
+        new Permission
+        {   
+            Id = permissionId,
+            WorkerId = workerId,
+            LastUpdatedAt = originalTimestamp,
+            Status = 0
+        }, 
+        new Permission
+        {   
+            Id = Guid.NewGuid(),
+            WorkerId = workerId,
+            LastUpdatedAt = DateTime.UtcNow,
+            Status = 0
+        }
+        );
+
+        await dbContext.SaveChangesAsync();
+        var permissionRepo = new PermissionRepoImpl(dbContext);
+        var permissionService = new PermissionServiceImpl(permissionRepo);
+
+       //Act
+       var result = await permissionService.UpdateAsync(permissionId, 1);
+
+       //Assert
+       Assert.True(result.Status == (PermissionStatus)1);
+       Assert.True(result.LastUpdatedAt > originalTimestamp);
+    }
+
 
 
 }
