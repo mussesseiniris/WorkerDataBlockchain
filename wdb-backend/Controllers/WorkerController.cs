@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
-
+using wdb_backend.Services;
 namespace wdb_backend.Controllers;
 
 /// <summary>
@@ -11,25 +12,39 @@ namespace wdb_backend.Controllers;
 [Route("api/[controller]")]
 public class WorkerController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IPermissionService _permissionService;
+    private readonly IRequestService _requestService;
 
-    public WorkerController(AppDbContext context)
+    public WorkerController(IPermissionService permissionService, IRequestService requestService)
     {
-        _context = context;
+        _permissionService = permissionService;
+        _requestService = requestService;
     }
 
-    /// <summary>
-    /// Creates a new worker record in the database.
-    /// </summary>
-    /// <param name="worker">The worker data to be stored in the database.</param>
-    /// <returns>200 OK with the created worker, including database-generated ID and timestamp.</returns>
-    [HttpPost]
-    public async Task<ActionResult<Worker>> AddWorker(Worker worker)
+    [HttpGet("{workerId}/permissions")]
+    public async Task<ActionResult<List<Permission>>> GetPermissions(Guid workerId, CancellationToken cancellationToken)
     {
-        _context.Workers.Add(worker);
-        await _context.SaveChangesAsync();
-        return Ok(worker);
+        var result = await _permissionService.GetAllByWorkerIdAsync(workerId, 0, cancellationToken);
+
+        if (result == null)
+        {
+            return NotFound(new { error = "WORKER_NOT_FOUND" });
+        }
+
+        return Ok(result);
     }
 
+    [HttpGet("{workerId}/requests")]
+    public async Task<ActionResult<Request>> GetRequestReason(Guid workerId, Guid requestId)
+    {
+        var result = await _requestService.GetByRequestIdAsync(workerId, requestId);
+
+        if (result == null)
+        {
+            return NotFound(new { error = "REQUEST_NOT_FOUND" });
+        }
+
+        return Ok(result);
+    }
 
 }

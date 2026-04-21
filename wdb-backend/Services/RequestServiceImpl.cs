@@ -27,7 +27,7 @@ public class RequestServiceImpl:IRequestService
         throw new NotImplementedException();
     }
 
-    public async Task <Request> GetAllByRequestIdAsync(Guid workerId, Guid requestId, CancellationToken cancellationToken = default)
+    public async Task <Request> GetByRequestIdAsync(Guid workerId, Guid requestId, CancellationToken cancellationToken = default)
     {
         var result = await _requestRepository.GetAllByWorkerIdAsync(workerId)??throw new KeyNotFoundException();
         var request = result.FirstOrDefault(x => x.Id == requestId)?? throw new KeyNotFoundException();
