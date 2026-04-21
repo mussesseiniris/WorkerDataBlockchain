@@ -1,3 +1,5 @@
+using System.Reflection.Metadata.Ecma335;
+using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
@@ -32,8 +34,9 @@ public class PermissionRepoImpl:IPermissionRepository
         throw new NotImplementedException();
     }
 
-    public Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _dbContext.Permissions.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken);
+        return result;
     }
 }

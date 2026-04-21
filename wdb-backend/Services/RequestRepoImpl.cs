@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
@@ -22,9 +23,10 @@ public class RequestRepoImpl : IRequestRepository
         throw new NotImplementedException();
     }
 
-    public Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _dbContext.Requests.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken);
+        return result;
     }
 
 

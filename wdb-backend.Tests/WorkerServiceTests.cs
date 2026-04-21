@@ -171,7 +171,7 @@ public class WorkerServiceTests
         var requestService = new RequestServiceImpl(requestRepo);
 
         //Act
-        var resultPermission = await permissionService.GetAllByWorkerIdAsync(workerId);
+        var resultPermission = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
         var resultRequest = await requestService.GetAllByRequestIdAsync(workerId, requestId);
 
         //Assert

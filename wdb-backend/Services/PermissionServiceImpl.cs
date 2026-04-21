@@ -36,6 +36,18 @@ public class PermissionServiceImpl:IPermissionService
         throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Retrieves permissions for given worker. Optionally filters by permission status.
+    /// </summary>
+    /// <param name="workerId">The ID of wokrer whose permissions to retrieve </param>
+    /// <param name="Status"> 
+    /// Optional. Filters results by permission status:
+    /// 0 = Pending, 1 = Approved, 2 = Rejected.
+    /// If not provided, all permission regardless of status are returned.
+    /// </param>
+    /// <param name="cancellationToken">Token to cancel async operation</param>
+    /// <returns>A list of permissions</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when no permissions are found for given worker ID </exception>
     public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, int Status = -1, CancellationToken cancellationToken = default)
     {
        var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId)??throw new KeyNotFoundException();
