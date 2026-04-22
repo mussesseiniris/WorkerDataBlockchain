@@ -17,5 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<Worker> Workers { get; set; }
 
     public DbSet<Employer> Employers { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+    public DbSet<Request> Requests{ get; set; }
 
 }
