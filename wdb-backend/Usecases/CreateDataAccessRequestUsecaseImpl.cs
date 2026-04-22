@@ -6,7 +6,7 @@ namespace wdb_backend.Usecases;
 /// <summary>
 /// Orchestrates RequestService and PermissionService to create a data access request.
 /// </summary>
-public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequest
+public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecase
 {
     private readonly IPermissionService _permService;
     private readonly IRequestService _requService;
@@ -20,4 +20,5 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequest
         var request = await _requService.CreateAsync(employerId, workerId, reason);
         await _permService.CreateAllByRequestAsync(request, workerInfos);
     }
+
 }
