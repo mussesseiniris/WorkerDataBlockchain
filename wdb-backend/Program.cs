@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using wdb_backend.Data;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
+using wdb_backend.Usecases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +22,13 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddControllers();
-
+builder.Services.AddScoped<IWorkerService, WorkerServiceImpl>();
+builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
+builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
+builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
+builder.Services.AddScoped<IEmployerService, EmployerServiceImpl>();
+builder.Services.AddScoped<ICreateDataAccessRequestUsecase,CreateDataAccessRequestUsecaseImpl>();
+builder.Services.AddScoped<IFindWorkerInfosByEmailUsecase,FindWorkerInfosByEmailUsecaseImpl>();
 
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
