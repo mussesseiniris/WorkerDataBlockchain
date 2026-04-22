@@ -16,7 +16,7 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
         throw new NotImplementedException();
     }
 
-    public async Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
         var resultInfos = await _workerInfoRepo.GetAllAsync(workerId,default)??throw new KeyNotFoundException();
         return resultInfos;

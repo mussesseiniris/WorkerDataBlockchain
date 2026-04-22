@@ -3,7 +3,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class EmployerServicerImpl:IEmployerService
+public class EmployerServiceImpl:IEmployerService
 {
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {

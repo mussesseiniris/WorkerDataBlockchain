@@ -4,7 +4,7 @@ namespace wdb_backend.Abstractions;
 
 public interface IPermissionService
 {
-    Task CreateAllByRequestAsync(Request request, IEnumerable<WorkerInfo> workerInfos, CancellationToken cancellationToken = default);
+    Task CreateAllByRequestAsync(Request request, List<WorkerInfo> workerInfos, CancellationToken cancellationToken = default);
 
     Task<Permission> UpdateAsync(Guid requestId, Permission permission, CancellationToken cancellationToken = default);
 

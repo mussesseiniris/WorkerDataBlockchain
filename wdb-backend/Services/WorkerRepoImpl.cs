@@ -10,7 +10,7 @@ public class WorkerRepoImpl:IWorkerInfoRepository
         throw new NotImplementedException();
     }
 
-    public Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

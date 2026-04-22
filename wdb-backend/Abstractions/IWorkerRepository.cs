@@ -19,7 +19,6 @@ public interface IWorkerRepository
     // delete worker by email
     Task<Worker> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
 
-    // get worker_info by work id
-    Task<WorkerInfo> GetWorkerInfoById(Guid workerId, CancellationToken cancellationToken = default);
+
 
 }

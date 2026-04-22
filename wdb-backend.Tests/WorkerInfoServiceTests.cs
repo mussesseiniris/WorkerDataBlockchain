@@ -16,7 +16,7 @@ public class WorkerInfoServiceTests
         var workerId = Guid.NewGuid();
         var fakeWorkerInfo1 = new WorkerInfo { WorkerId = workerId, Desc = "address", Value = "havana rise" };
         var fakeWorkerInfo2 = new WorkerInfo { WorkerId = workerId, Desc = "phone", Value = "12345678" };
-        HashSet<WorkerInfo> workerInfos = new HashSet<WorkerInfo>();
+        List<WorkerInfo> workerInfos = new List<WorkerInfo>();
         workerInfos.Add(fakeWorkerInfo1);
         workerInfos.Add(fakeWorkerInfo2);
         mockRepo.Setup(r => r.GetAllAsync(workerId, default)).ReturnsAsync(workerInfos);
