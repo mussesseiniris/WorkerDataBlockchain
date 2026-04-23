@@ -53,4 +53,7 @@ public class Employer
     [Column("private_key")]
     public string? PrivateKey { get; set; }
 
+    [Column("verified")]    
+    public bool Verified { get; set; }
+
 }

@@ -31,6 +31,12 @@ public class Worker
     [Column("created_at")]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime CreatedAt { get; set; }
+    
+    /// <summary>
+    /// Whether the worker's identity has been verified.
+    /// </summary>
+    [Column("verified")]    
+     public bool Verified { get; set; }
 
     /// <summary>
     /// Whether the worker's identity has been verified.
