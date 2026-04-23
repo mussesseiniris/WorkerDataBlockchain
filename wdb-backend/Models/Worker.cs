@@ -38,13 +38,6 @@ public class Worker
     [Column("verified")]    
      public bool Verified { get; set; }
 
-    /// <summary>
-    /// Whether the worker's identity has been verified.
-    /// </summary>
-    [Column("verified")]
-    public bool Verified { get; set; }
-
-
 
     /// <summary>
     /// Blockchain address derived from the public key.
