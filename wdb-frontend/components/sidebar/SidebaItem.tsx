@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LucideIcon } from 'lucide-react'
 
+// define the each item in sidebar what should include.
 interface SidebarItemProps {
     label: string
     icon: LucideIcon
@@ -11,6 +12,7 @@ interface SidebarItemProps {
     collapsed: boolean
 }
 
+// render each item in sidebar, and highlight the active one.
 export default function SidebarItem({ label, icon: Icon, href, collapsed }: SidebarItemProps) {
     const pathname = usePathname()
     const isActive = pathname === href
