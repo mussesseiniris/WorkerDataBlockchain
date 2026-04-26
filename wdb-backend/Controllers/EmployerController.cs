@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Abstractions;
+using wdb_backend.DTOs;
 using wdb_backend.Models;
+using wdb_backend.Services;
 
 namespace wdb_backend.Controllers;
 
@@ -11,12 +13,33 @@ public class EmployerController : ControllerBase
 {
     private readonly ICreateDataAccessRequestUsecase _createDataAccessUsecase;
     private readonly IFindWorkerInfosByEmailUsecase _findWorkerInfosUsecase;
+    private readonly IWorkerService _workerService;
 
-    public EmployerController(ICreateDataAccessRequestUsecase createDataAccessUsecase, IFindWorkerInfosByEmailUsecase findWorkerInfosUsecase)
+    public EmployerController(ICreateDataAccessRequestUsecase createDataAccessUsecase,
+        IFindWorkerInfosByEmailUsecase findWorkerInfosUsecase, IWorkerService workerService)
     {
         _createDataAccessUsecase = createDataAccessUsecase;
         _findWorkerInfosUsecase = findWorkerInfosUsecase;
+        _workerService = workerService;
+    }
 
+    /// <summary>
+    /// Get the worker by Email.
+    /// </summary>
+    /// <param name="email">The worker's email address.</param>
+    /// <returns>200 OK with list of worker info, or 4404 Notfound if worker not found</returns>
+    [HttpGet("GetWorkerByEmail")]
+    public async Task<ActionResult<Worker>> GetWorkerByEmail(string email)
+    {
+        try
+        {
+            var worker = await _workerService.GetByEmailAsync(email);
+            return Ok(worker);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound($"Worker {email} not found");
+        }
     }
 
     /// <summary>
@@ -27,9 +50,25 @@ public class EmployerController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<WorkerInfo>>> GetWorkerInfosByEmail(string email)
     {
-        var workerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(email);
-        if (workerInfos.Count == 0) { return NotFound(); }
-        return Ok(workerInfos);
+        try
+        {
+            var workerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(email);
+            if (workerInfos.Count == 0)
+            {
+                return Ok(new List<WorkerInfo>());
+            }
+
+            var result = workerInfos.Select(w => new WorkerInfoDto()
+            {
+                Id = w.Id,
+                Desc = w.Desc,
+            }).ToList();
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound($"Worker {email} not found");
+        }
     }
 
     /// <summary>
@@ -48,10 +87,11 @@ public class EmployerController : ControllerBase
         {
             return NotFound();
         }
-        var selectedInfos = allWorkerInfos.Where(w => infoDesc.Contains(w.Desc, StringComparer.OrdinalIgnoreCase)).ToList();
+
+        var selectedInfos = allWorkerInfos.Where(w => infoDesc.Contains(w.Desc, StringComparer.OrdinalIgnoreCase))
+            .ToList();
         var worker_id = allWorkerInfos[0].WorkerId;
         await _createDataAccessUsecase.CreateDataAccessRequest(selectedInfos, employerId, worker_id, reason);
         return Ok();
     }
-
 }
