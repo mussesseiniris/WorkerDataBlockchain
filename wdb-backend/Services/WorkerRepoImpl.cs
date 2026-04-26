@@ -3,35 +3,36 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class WorkerRepoImpl:IWorkerInfoRepository
+public class WorkerRepoImpl:IWorkerRepository
 {
-    public Task<WorkerInfo> GetOneAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task AddOneAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<WorkerInfo> UpdateAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
+    public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<WorkerInfo> DeleteAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
+    Task<Worker> IWorkerRepository.GetByEmailAsync(string email, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<WorkerInfo> GetByEmailAsync(string workerEmail, CancellationToken cancellationToken = default)
+    public Task AddAsync(Worker worker, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
+
+    public Task<Worker> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Worker> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 }

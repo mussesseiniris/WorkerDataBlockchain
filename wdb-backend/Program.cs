@@ -29,6 +29,11 @@ builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
 builder.Services.AddScoped<IEmployerService, EmployerServiceImpl>();
 builder.Services.AddScoped<ICreateDataAccessRequestUsecase,CreateDataAccessRequestUsecaseImpl>();
 builder.Services.AddScoped<IFindWorkerInfosByEmailUsecase,FindWorkerInfosByEmailUsecaseImpl>();
+builder.Services.AddScoped<IWorkerRepository, WorkerRepoImpl>();
+builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
+
 
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(

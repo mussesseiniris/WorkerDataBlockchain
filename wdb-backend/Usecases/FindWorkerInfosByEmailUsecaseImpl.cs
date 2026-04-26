@@ -14,13 +14,14 @@ public class FindWorkerInfosByEmailUsecaseImpl : IFindWorkerInfosByEmailUsecase
 
     public async Task<List<WorkerInfo>> FindWorkerInfosByEmail(string email, CancellationToken cancellationToken)
     {
-        var worker = await  _workerService.GetByEmailAsync(email, cancellationToken);
-        if(worker == null)
+        var worker = await _workerService.GetByEmailAsync(email, cancellationToken);
+        if (worker == null)
         {
             return new List<WorkerInfo>();
         }
-        var workerinfos = await _workerInfoService.GetAllAsync(worker.Id,cancellationToken);
-        return workerinfos;
+        else{
+        var workerinfos = await _workerInfoService.GetAllAsync(worker.Id, cancellationToken);
+        return workerinfos;}
 
     }
 }
