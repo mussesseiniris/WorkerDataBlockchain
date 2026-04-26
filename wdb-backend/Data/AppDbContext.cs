@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using wdb_backend.Models;
+
 namespace wdb_backend.Data;
 
 /// <summary>
@@ -9,7 +10,8 @@ namespace wdb_backend.Data;
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    { }
+    {
+    }
 
     /// <summary>
     /// Represents the workers table in the database.
@@ -19,5 +21,5 @@ public class AppDbContext : DbContext
     public DbSet<Employer> Employers { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<Request> Requests { get; set; }
-
+    public DbSet<WorkerInfo> WorkerInfos { get; set; }
 }
