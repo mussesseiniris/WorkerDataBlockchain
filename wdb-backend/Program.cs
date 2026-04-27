@@ -1,16 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using wdb_backend.Data;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Data;
+using wdb_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// OpenAPI / Swagger
 builder.Services.AddOpenApi();
-//Add Swagger service.
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddSwaggerGen(options =>
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -18,19 +17,35 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddControllers();
+// CORS for Next.js frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
-
+// DbContext
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("SupabaseConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Controllers + enum JSON serialization
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+// Services
+builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
 
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
+
 app.MapControllers();
 app.MapOpenApi();
 
@@ -39,4 +54,5 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.Run();
