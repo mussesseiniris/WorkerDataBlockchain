@@ -13,6 +13,7 @@ namespace wdb_backend.Controllers
     public class WorkerInfoController : ControllerBase
     {
         private readonly IWorkerInfoRepository _workerInfoRepository;
+        
 
         public WorkerInfoController(IWorkerInfoRepository workerInfoRepository)
         {

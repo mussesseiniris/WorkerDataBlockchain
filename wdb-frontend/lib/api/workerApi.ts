@@ -4,7 +4,7 @@ const BASE_URL = '/api/workerinfo'
 
 
 
-// get worker repority from http
+// a method that get worker repority from http in order to translate data to frontend
 // parament is worker id and had statement by type.ts
 export async function getWorkerProfile(workerId: string) {
     const response = await fetch(`${BASE_URL}/${workerId}`, {
