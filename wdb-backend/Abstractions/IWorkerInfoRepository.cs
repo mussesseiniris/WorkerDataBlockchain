@@ -18,6 +18,6 @@ public interface IWorkerInfoRepository
     // update worker info by worker info id
     Task<WorkerInfo> UpdateAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default);
 
-    // delete the whole worker info by worker info id
-    Task DeleteAsync(Guid workerId, CancellationToken cancellationToken = default);
+    // delete the whole worker info by worker info id，have not start since ui have not define.
+    //Task DeleteAsync(Guid workerId, CancellationToken cancellationToken = default);
 }

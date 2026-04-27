@@ -58,19 +58,10 @@ public class WorkerInfoRepoImpl : IWorkerInfoRepository
 
 
 
-    // this method is to delete the whole worker info in db.
-    public async Task DeleteAsync(Guid workerId, CancellationToken cancellationToken = default)
+    // this method is to delete the whole worker info in db. but ui have not define so this method have not done.
+    public Task<WorkerInfo> DeleteAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
     {
-        // find the worker info by worker id
-        var allInfos = await _context.WorkerInfos
-            .Where(w => w.WorkerId == workerId)
-            .ToListAsync(cancellationToken);
-
-        if (!allInfos.Any()) throw new KeyNotFoundException("Worker info not found.");
-
-        // delete the worker info
-        _context.WorkerInfos.RemoveRange(allInfos);
-        await _context.SaveChangesAsync(cancellationToken);
+        throw new NotImplementedException();
     }
 
 }
