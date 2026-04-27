@@ -13,7 +13,7 @@ namespace wdb_backend.Controllers
     public class WorkerInfoController : ControllerBase
     {
         private readonly IWorkerInfoRepository _workerInfoRepository;
-        
+
 
         public WorkerInfoController(IWorkerInfoRepository workerInfoRepository)
         {
@@ -51,14 +51,14 @@ namespace wdb_backend.Controllers
         }
 
         /// <summary>
-        /// Deletes all worker info for a specific worker.
+        /// Deletes all worker info for a specific worker. have not start it since the ui have not define.
         /// </summary>
-        [HttpDelete("{workerId}")]
-        public async Task<ActionResult> DeleteWorkerInfo(Guid workerId)
-        {
-            await _workerInfoRepository.DeleteAsync(workerId);
-            return Ok();
-        }
+        //     [HttpDelete("{workerId}")]
+        //     public async Task<ActionResult> DeleteWorkerInfo(Guid workerId)
+        //     {
+        //         await _workerInfoRepository.DeleteAsync(workerId);
+        //         return Ok();
+        //     }
     }
 
 }
