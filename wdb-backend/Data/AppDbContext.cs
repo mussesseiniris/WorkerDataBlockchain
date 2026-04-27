@@ -18,4 +18,6 @@ public class AppDbContext : DbContext
 
     public DbSet<Employer> Employers { get; set; }
 
+    public DbSet<WorkerInfo> WorkerInfos { get; set; }
+
 }

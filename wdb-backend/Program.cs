@@ -4,11 +4,14 @@ using wdb_backend.Abstractions;
 using wdb_backend.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 builder.Services.AddOpenApi();
 //Add Swagger service.
 builder.Services.AddEndpointsApiExplorer();
