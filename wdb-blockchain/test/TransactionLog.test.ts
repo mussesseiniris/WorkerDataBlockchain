@@ -25,7 +25,7 @@ describe("TransactionLog", function () {
         return { contract, employer, worker, otherEmployer, otherWorker };
     }
 
-    //test on deployment. Check deployment will create contract address. Shall not be empty
+    //test on deployment. Check deployment should create contract address. Shall not be empty
     describe("Deployment", function () {
 
         it("Deploy and have a valid contract address", async function () {

@@ -39,7 +39,8 @@ public class BlockchainService : IBlockchainService
 {
     private readonly string _rpcUrl;
     private readonly string _contractAddress;
-    private readonly string _abi;
+    private readonly string _abiPath;
+    private string? _abi;
     private readonly ILogger<BlockchainService> _logger;
 
     public BlockchainService(
@@ -55,12 +56,18 @@ public class BlockchainService : IBlockchainService
         var abiPath = config["Blockchain:AbiPath"]
             ?? throw new InvalidOperationException("Blockchain:AbiPath not configured");
 
-        // ABI file will exist after we compile the Solidity contract
-        // For now this will throw if file does not exist yet
+        _abiPath = abiPath;
+    }
+
+    private string GetAbi()
+    {
+        if (_abi != null) return _abi;
+
         var artifact = JsonSerializer.Deserialize<JsonElement>(
-            File.ReadAllText(abiPath)
+            File.ReadAllText(_abiPath)
         );
         _abi = artifact.GetProperty("abi").GetRawText();
+        return _abi;
     }
 
     // ─────────────────────────────────────────────────────
@@ -159,7 +166,7 @@ public class BlockchainService : IBlockchainService
         try
         {
             var web3 = new Web3(_rpcUrl);
-            var contract = web3.Eth.GetContract(_abi, _contractAddress);
+            var contract = web3.Eth.GetContract(GetAbi(), _contractAddress);
 
             var eventHandler = contract.GetEvent<TransactionLogEvent>();
             var filterInput = eventHandler.CreateFilterInput(
