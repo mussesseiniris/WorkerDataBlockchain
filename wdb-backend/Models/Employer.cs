@@ -35,7 +35,23 @@ public class Employer
     /// <summary>
     /// Whether the worker's identity has been verified.
     /// </summary>
-    [Column("verified")]    
+    [Column("verified")]
     public bool Verified { get; set; }
+
+    /// <summary>
+    /// Blockchain address derived from the public key.
+    /// Used to identify this user on the blockchain.
+    /// </summary>
+    [Column("blockchain_address")]
+    public string? BlockchainAddress { get; set; }
+
+    /// <summary>
+    /// Private key used to sign blockchain transactions.
+    /// Stored here for simplicity during development.
+    /// Move to Key Vault before going to production.
+    /// </summary>
+    [Column("private_key")]
+    public string? PrivateKey { get; set; }
+
 
 }
