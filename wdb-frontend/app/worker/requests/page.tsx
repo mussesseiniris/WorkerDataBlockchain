@@ -1,6 +1,9 @@
+"use client";
 // Worker requests: view, approve, or reject employer data access requests
 // import { FetchApi } from '@lib/api';
+
 import { useState, ReactNode } from 'react';
+import styles from "./page.module.css";
 
 interface TabProps {
     id: string;
@@ -10,8 +13,8 @@ interface TabProps {
 
 const tabs: TabProps[] = [
     {
-        id: "Active request",
-        label: "active request",
+        id: "active-request",
+        label: "Active Request",
         children: 
         <div>
             <p>
@@ -20,8 +23,14 @@ const tabs: TabProps[] = [
         </div>
     },
     {
-        id: "Active access",
-        label: "active access"
+        id: "active-access",
+        label: "Active Access",
+        children: 
+        <div>
+            <p>
+                List of permission approved
+            </p>  
+        </div>
     }
 ]
 
@@ -34,18 +43,25 @@ export default function Page() {
     
     
     return (
-        <main>
-            <div>
+        <main className={styles.main}>
+            <div className={styles.heading}>
+                <h1>Data Access</h1>
+            </div>
+            <div className={styles.tablist}>
                 {tabs.map(({id, label}) => 
                 <button 
-                key={id}
-                aria-selected={activeTab === id}
-                onClick={() => setActiveTab(id)}
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={`${styles.tabBtn} ${activeTab === id ? styles.tabBtnActive : ""}`}
                 >
+                    {label}
                 </button>
                 )}
             </div>
-            <div>
+            <div 
+            className={styles.tabContent}
+            id={`panel-${activeTab}`}
+            >
                 {activeContent}
             </div>
         </main>
