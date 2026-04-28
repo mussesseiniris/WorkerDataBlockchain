@@ -15,10 +15,13 @@ public class WorkerController:ControllerBase
     private readonly IPermissionService _permissionService;
     private readonly IRequestService _requestService;
 
-    public WorkerController (IPermissionService permissionService, IRequestService requestService)
+    private readonly IWorkerInfoService _workerInfoService;
+
+    public WorkerController (IPermissionService permissionService, IRequestService requestService, IWorkerInfoService workerInfoService)
     {
         _permissionService = permissionService;
         _requestService = requestService;
+        _workerInfoService = workerInfoService;
     }
 
     [HttpGet("{workerId}/permissions")]
@@ -45,6 +48,19 @@ public class WorkerController:ControllerBase
         }
         
         return Ok(result);
+    }
+
+    [HttpGet("{workerId}/info")]
+    public async Task<ActionResult<Request>> GetAllWorkerInfo(Guid workerId)
+    {
+        var result = await _workerInfoService.GetAllAsync(workerId);
+        if (result == null)
+        {
+            return NotFound(new {error = "wORKER_NOT_FOUND"});
+        }
+
+        return Ok(result);
+
     }
 
 }
