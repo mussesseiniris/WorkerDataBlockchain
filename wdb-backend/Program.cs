@@ -18,6 +18,17 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
+// CORS: allow the frontend dev server and production origin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // registration and loing services
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -34,6 +45,7 @@ builder.Services.AddControllers()
 
 
 var app = builder.Build();
+app.UseCors("FrontendPolicy");
 app.MapControllers();
 app.MapOpenApi();
 
