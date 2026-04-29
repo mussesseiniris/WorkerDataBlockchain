@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { login, UserRole } from '@/lib/api';
+import { register, UserRole } from '@/lib/api';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>('worker');
   const [email, setEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,16 +19,12 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await login(role, email, password);
-      if (!res.success || !res.data) {
+      const res = await register(role, email, userName, password);
+      if (!res.success) {
         setError(res.message);
         return;
       }
-      localStorage.setItem('accessToken', res.data.accessToken);
-      localStorage.setItem('userName', res.data.userName);
-      localStorage.setItem('role', role);
-      localStorage.setItem('userId', res.data.userId);
-      router.push(`/${role}`);
+      router.push('/login');
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -39,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="bg-white border border-[#D9D9D9] rounded-xl p-10 w-full max-w-[400px]">
 
-        <h1 className="text-2xl font-bold text-black mt-0 mb-8">Sign In</h1>
+        <h1 className="text-2xl font-bold text-black mt-0 mb-8">Create Account</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
@@ -49,6 +46,18 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full py-[11px] px-[14px] border border-[#D9D9D9] rounded-lg text-[0.9rem] text-black bg-white outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-black mb-1.5">Username</label>
+            <input
+              type="text"
+              placeholder="yourname"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
               required
               className="w-full py-[11px] px-[14px] border border-[#D9D9D9] rounded-lg text-[0.9rem] text-black bg-white outline-none"
             />
@@ -92,13 +101,13 @@ export default function LoginPage() {
             disabled={loading}
             className="bg-[#49454F] text-white p-3 rounded-lg text-[0.9rem] font-semibold mt-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 
         <p className="text-sm text-[#49454F] mt-6 mb-0">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-black font-semibold underline">Register</Link>
+          Already have an account?{' '}
+          <Link href="/login" className="text-black font-semibold underline">Sign in</Link>
         </p>
       </div>
     </div>

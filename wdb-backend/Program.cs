@@ -20,12 +20,26 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
+// CORS: allow the frontend dev server and production origin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// registration and loing services
+builder.Services.AddInfrastructure(builder.Configuration);
+
 builder.Services.AddControllers();
 
 
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("SupabaseConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
@@ -34,6 +48,7 @@ builder.Services.AddControllers()
 builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 
 var app = builder.Build();
+app.UseCors("FrontendPolicy");
 app.MapControllers();
 app.MapOpenApi();
 

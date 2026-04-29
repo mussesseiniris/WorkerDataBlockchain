@@ -1,31 +1,41 @@
+using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
+using wdb_backend.Data;
 using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class WorkerRepoImpl:IWorkerInfoRepository
+public class WorkerRepoImpl: IWorkerRepository
 {
-    public Task<WorkerInfo> GetOneAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
+    private readonly AppDbContext _context;
+
+    public WorkerRepoImpl(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await _context.Workers.AnyAsync(worker => worker.Email.Equals(email), cancellationToken);
+    }
+
+    public async Task<Worker?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await _context.Workers.FirstOrDefaultAsync(worker => worker.Email.Equals(email), cancellationToken);
+    }
+
+    public async Task AddAsync(Worker worker, CancellationToken cancellationToken = default)
+    {
+        await _context.Workers.AddAsync(worker, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<Worker> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task AddOneAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<WorkerInfo> UpdateAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<WorkerInfo> DeleteAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
+    public Task<Worker> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
