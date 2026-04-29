@@ -79,19 +79,20 @@ public class EmployerController : ControllerBase
     /// <param name="reason">The reason for requesting access.</param>
     /// <param name="employerId">The ID of the employer making the request.</param>
     /// <returns>200 OK if successful, 404 if worker not found.</returns>
-    [HttpPost("CreateRequest")]
-    public async Task<ActionResult> CreateRequest(string email, List<string> infoDesc, string reason, Guid employerId)
+    [HttpPost("AccessRequests")]
+    public async Task<ActionResult> CreateRequest([FromBody]CreateRequestUsecaseDTO request)
     {
-        var allWorkerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(email);
+        var employerId = Guid.Parse("019d994a-ae4c-704b-b416-da6ba9ab32ae");
+        var allWorkerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(request.Email);
         if (allWorkerInfos == null || allWorkerInfos.Count == 0)
         {
             return NotFound();
         }
 
-        var selectedInfos = allWorkerInfos.Where(w => infoDesc.Contains(w.Desc, StringComparer.OrdinalIgnoreCase))
+        var selectedInfos = allWorkerInfos.Where(w => request.InfoDesc.Contains(w.Id.ToString()))
             .ToList();
         var worker_id = allWorkerInfos[0].WorkerId;
-        await _createDataAccessUsecase.CreateDataAccessRequest(selectedInfos, employerId, worker_id, reason);
+        await _createDataAccessUsecase.CreateDataAccessRequest(selectedInfos,employerId,worker_id, request.Reason);
         return Ok();
     }
 }
