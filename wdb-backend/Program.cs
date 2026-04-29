@@ -59,7 +59,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-<<<<<<< HEAD
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -69,10 +69,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-=======
+
 builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 
->>>>>>> main
 var app = builder.Build();
 app.UseCors("FrontendPolicy");
 app.MapControllers();
