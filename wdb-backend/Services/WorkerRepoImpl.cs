@@ -3,10 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
-
 namespace wdb_backend.Services;
 
-public class WorkerRepoImpl : IWorkerRepository
+public class WorkerRepoImpl: IWorkerRepository
 {
     private readonly AppDbContext _context;
 
@@ -15,17 +14,12 @@ public class WorkerRepoImpl : IWorkerRepository
         _context = context;
     }
 
-    public Task AddOneAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await _context.Workers.AnyAsync(worker => worker.Email.Equals(email), cancellationToken);
     }
 
-    public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Worker> GetByEmailAsync(string email, CancellationToken cancellationToken)
+      public async Task<Worker> GetByEmailAsync(string email, CancellationToken cancellationToken)
     {
         var resultWorker = await _context.Workers.FirstOrDefaultAsync(w => w.Email == email, cancellationToken);
         if (resultWorker == null)
@@ -36,9 +30,10 @@ public class WorkerRepoImpl : IWorkerRepository
         return resultWorker;
     }
 
-    public Task AddAsync(Worker worker, CancellationToken cancellationToken = default)
+    public async Task AddAsync(Worker worker, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await _context.Workers.AddAsync(worker, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public Task<Worker> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default)
