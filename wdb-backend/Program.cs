@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using wdb_backend.Data;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -43,6 +45,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 
 var app = builder.Build();
 app.UseCors("FrontendPolicy");
