@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using wdb_backend.Data;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using wdb_backend.Abstractions;
-using wdb_backend.Data;
-using wdb_backend.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,22 @@ builder.Services.AddSwaggerGen(options =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
 });
+
+// CORS: allow the frontend dev server and production origin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// registration and loing services
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddControllers();
 
 // CORS for Next.js frontend
 builder.Services.AddCors(options =>
@@ -39,10 +56,12 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 // Services
 builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
 
 var app = builder.Build();
+app.UseCors("FrontendPolicy");
 
 app.UseCors("AllowFrontend");
 
