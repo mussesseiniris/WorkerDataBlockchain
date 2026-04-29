@@ -12,6 +12,8 @@ export async function FetchApi(endpoint: string, options?: RequestInit) {
   if (!result.ok) {
     throw new Error(`Http error: ${result.status}`);
   }
-  return result.json();
+
+  const text = await result.text();
+  return text ? JSON.parse(text) : null;
 
 }
