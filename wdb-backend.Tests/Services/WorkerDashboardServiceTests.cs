@@ -43,6 +43,7 @@ public class WorkerDashboardServiceTests
             Id = workerId,
             Name = "user",
             Email = "user@example.com",
+            Password = "hashed-password",
             Verified = true,
             CreatedAt = DateTime.UtcNow
         });
@@ -83,6 +84,7 @@ public class WorkerDashboardServiceTests
                 Id = workerId,
                 Name = "user",
                 Email = "user@example.com",
+                Password = "hashed-password",
                 Verified = true,
                 CreatedAt = DateTime.UtcNow
             },
@@ -91,6 +93,7 @@ public class WorkerDashboardServiceTests
                 Id = otherWorkerId,
                 Name = "other",
                 Email = "other@example.com",
+                Password = "hashed-password",
                 Verified = true,
                 CreatedAt = DateTime.UtcNow
             }
@@ -102,6 +105,7 @@ public class WorkerDashboardServiceTests
                 Id = employer1Id,
                 Name = "First Step Solutions",
                 Email = "contact@firststepsolutions.nz",
+                Password = "hashed-password",
                 Verified = true,
                 CreatedAt = DateTime.UtcNow
             },
@@ -110,6 +114,7 @@ public class WorkerDashboardServiceTests
                 Id = employer2Id,
                 Name = "BuildSafe Ltd",
                 Email = "admin@buildsafe.nz",
+                Password = "hashed-password",
                 Verified = true,
                 CreatedAt = DateTime.UtcNow
             }
@@ -152,7 +157,7 @@ public class WorkerDashboardServiceTests
         // Assert
         Assert.NotNull(result);
 
-        var json = System.Text.Json.JsonSerializer.Serialize(result);
+        var json = JsonSerializer.Serialize(result);
 
         Assert.Contains("\"latestRequests\":[", json);
         Assert.Contains("First Step Solutions", json);
@@ -177,6 +182,7 @@ public class WorkerDashboardServiceTests
             Id = workerId,
             Name = "user",
             Email = "user@example.com",
+            Password = "hashed-password",
             Verified = true,
             CreatedAt = DateTime.UtcNow
         });
@@ -186,6 +192,7 @@ public class WorkerDashboardServiceTests
             Id = employerId,
             Name = "First Step Solutions",
             Email = "contact@firststepsolutions.nz",
+            Password = "hashed-password",
             Verified = true,
             CreatedAt = DateTime.UtcNow
         });
@@ -251,6 +258,7 @@ public class WorkerDashboardServiceTests
             Id = workerId,
             Name = "user",
             Email = "user@example.com",
+            Password = "hashed-password",
             Verified = true,
             CreatedAt = DateTime.UtcNow
         });
