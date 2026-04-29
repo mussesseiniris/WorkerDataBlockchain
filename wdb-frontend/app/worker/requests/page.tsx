@@ -4,6 +4,7 @@
 
 import { useState, ReactNode } from 'react';
 import styles from "./page.module.css";
+import RequestRow, { Request } from "../../components/RequestRow"
 
 interface TabProps {
     id: string;
@@ -11,15 +12,40 @@ interface TabProps {
     children?: ReactNode;
 }
 
+const requests: Request[] = [
+  {
+    id: "1",
+    company: "Company",
+    date: "05.01.2026 06:00 AM",
+    fields: [
+      { label: "Address", checked: false },
+      { label: "Phone Number", checked: false },
+      { label: "Gender", checked: false },
+    ],
+    reason: "Reason",
+  },
+  {
+    id: "2",
+    company: "Company",
+    date: "05.01.2026 06:00 AM",
+    fields: [
+      { label: "Address", checked: false },
+      { label: "Phone Number", checked: false },
+      { label: "Gender", checked: false },
+    ],
+    reason: "Reason",
+  }
+]
+
 const tabs: TabProps[] = [
     {
         id: "active-request",
         label: "Active Request",
         children: 
         <div>
-            <p>
-                List of permission requests
-            </p>  
+            {requests.map((r) => (
+                <RequestRow key={r.id} {...r}/>
+            ))}
         </div>
     },
     {
