@@ -84,7 +84,7 @@ public class AuthService<T> where T : class, IUser, new()
 
         // get the token
         string token = _jwtservice.GenerateAccessToken(user);
-        AuthResult result = new AuthResult(token, user.Name, user.Email);
+        AuthResult result = new AuthResult(token, user.Name, user.Email, user.Id);
 
         return (true, "Login Successful.", result);
     }

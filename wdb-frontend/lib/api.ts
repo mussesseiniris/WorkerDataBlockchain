@@ -13,6 +13,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5258';
     accessToken: string;
     userName: string;
     email: string;
+    userId: string;
   }
 
   export async function register(
