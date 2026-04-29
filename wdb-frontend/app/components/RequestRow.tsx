@@ -25,29 +25,33 @@ export default function RequestRow({ id, company, date, fields, reason}: Request
     };
 
     return (
-        <div>
+        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
 
-        <div>
-            <p> {company} </p>
-            <p> {date} </p>
-            <div>
+        <div className="flex flex-col gap-2">
+
+            <p className="text-sm"> {company} </p>
+            <p className="text-xs text-gray-500"> {date} </p>
+
+            <div className="flex gap-3 flex-wrap">
                 {checkedFields.map((field) => (
-                    <label key={field.label}>
+                    <label key={field.label}
+                    className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm cursor-pointer">
                         <input 
                         type="checkbox"
                         checked={field.checked}
                         onChange={() => toggleField(field.label)}
+                        className="cursor-pointer"
                         />
                         {field.label}
                     </label>
                 ))}
             </div>
-            <p> {reason} </p>
+            <p className="text-xs text-gray-500"> {reason} </p>
         </div>
 
-        <div>
-            <button>✔</button>
-            <button>✖</button>
+        <div className="flex gap-2">
+            <button className="bg-green-500 hover:bg-green-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors">✔</button>
+            <button className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors">✖</button>
         </div>
 
         </div>
