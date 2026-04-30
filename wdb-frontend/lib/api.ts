@@ -1,37 +1,16 @@
 // API client: centralized functions for calling the ASP.NET Core backend
+import { error } from 'console';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5258";
-const BASE_URL = `${API_BASE_URL}/api/worker/dataaccess`
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export type PermissionRequests = {
-    id: string;
-    workerid: string;
-    infoid: string;
-    status: string;
-    requestid: string;
-    expirydate: string;
-    lastupdatedat: string;
-}
-
-export type WorkerPermissionResponse = {
-    permissions: PermissionRequests[];
-}
-
-
-export async function getPermissions(
-  workerId: string
-): Promise<WorkerPermissionResponse> {
-  const response = await fetch(`${BASE_URL}/${workerId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
+export async function FetchApi(endpoint: string, options?: RequestInit) {
+  const result = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch worker permission");
+  if (!result.ok) {
+    throw new Error(`Http error: ${result.status}`);
   }
+  return result.json();
 
-  return response.json();
 }
