@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
@@ -25,9 +26,9 @@ public class WorkerController : ControllerBase
     }
 
     [HttpGet("{workerId}/permissions")]
-    public async Task<ActionResult<List<Permission>>> GetPermissions(Guid workerId, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<Permission>>> GetPermissions(Guid workerId)
     {
-        var result = await _permissionService.GetAllByWorkerIdAsync(workerId, 0, cancellationToken);
+        var result = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
 
         if (result == null)
         {
@@ -60,6 +61,58 @@ public class WorkerController : ControllerBase
         }
 
         return Ok(result);
+
+    }
+
+
+    public class FieldResponse
+    {
+        public string Id { get; set; }
+        public string Label { get; set; }
+        public bool Checked { get; set; } = false;
+    }
+
+    public class RequestRowResponse
+    {
+        public string Id { get; set; }
+        public string Company { get; set; }
+        public string Date { get; set; }
+        public List<FieldResponse> Fields { get; set; }
+        public string Reason { get; set; }
+    }
+
+    [HttpGet("{workerId}/rows")]
+    public async Task<ActionResult> GetRows(Guid workerId)
+    {
+        var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId);
+        var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+
+        var rows = requests.Select(req =>
+        {
+            var reqPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
+
+            var workerInfos = reqPermissions.Select(p =>
+            {
+                var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
+                return new FieldResponse
+                {
+                    Id = p.Id.ToString(),
+                    Label = info.Desc,
+                    Checked = false
+                };
+            }).ToList();
+            return new RequestRowResponse
+            {
+                Id = req.Id.ToString(),
+                Company = req.EmployerId.ToString(),
+                Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
+                Fields = workerInfos,
+                Reason = req.Reason
+            };
+        }).ToList();
+
+        return Ok(rows);
 
     }
 
