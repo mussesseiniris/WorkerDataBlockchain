@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 
-interface Field {
+export interface Field {
+    id: string;
     label: string;
     checked: boolean;
 }
 
-export interface Request {
+export interface Row {
     id: string;
     company: string;
     date:string;
@@ -15,7 +16,7 @@ export interface Request {
     reason: string;
 }
 
-export default function RequestRow({ id, company, date, fields, reason}: Request){
+export default function RequestRow({ id, company, date, fields, reason}: Row){
     const [checkedFields, setCheckedFields] = useState<Field[]>(fields);
 
     const toggleField = (label: string) => {
