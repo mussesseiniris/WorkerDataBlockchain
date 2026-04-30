@@ -6,8 +6,11 @@ const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function FetchApi(endpoint: string, options?: RequestInit) {
   const result = await fetch(`${BASE_API_URL}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers as Record<string, string>),
+    },
   });
   if (!result.ok) {
     throw new Error(`Http error: ${result.status}`);

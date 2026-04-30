@@ -71,7 +71,7 @@ export default function Page() {
       return next;
     });
   }
-// Submit access request for selected worker info items
+  // Submit access request for selected worker info items
   async function handleRequest() {
     if (!reason) {
       alert('please fill in the reason');
@@ -83,9 +83,17 @@ export default function Page() {
     }
 
     setSentMsg('Sending...');
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setSentMsg('Please log in first');
+      return;
+    }
     try {
       var result = await FetchApi('/api/Employer/AccessRequests', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           email: email,
           infoDesc: Array.from(isSelected),
@@ -99,10 +107,9 @@ export default function Page() {
   }
   return (
     <>
-    {/* create new access request */}
+      {/* create new access request */}
       {isOpen && (
         <div className="relative max-w-lg mx-auto mt-10 p-6 border border-gray-600 rounded-xl shadow-md">
-          
           {/* cloese button */}
           <button
             className="absolute top-5 right-8 text-gray-600 text-xl"
@@ -112,7 +119,7 @@ export default function Page() {
           </button>
           <div className="flex items-center justify-center flex-col gap-2">
             <p className="text-left w-full text-gray-600">Create new request</p>
-           
+
             {/* Step1: Search for worker by email  */}
             {!findWorker && (
               <div className=" w-full gap-2">
@@ -170,7 +177,7 @@ export default function Page() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Reason input and submit */}
                 <div className="flex flex-col items-center gap-4 rounded-lg my-4 w-full">
                   <div className="relative border border-gray-300 rounded-xl px-4 pt-5 pb-2 w-full">

@@ -1,10 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Abstractions;
 using wdb_backend.DTOs;
 using wdb_backend.Models;
 using wdb_backend.Services;
+using System.Security.Claims;
 
 namespace wdb_backend.Controllers;
 
@@ -80,11 +82,16 @@ public class EmployerController : ControllerBase
     /// <param name="reason">The reason for requesting access.</param>
     /// <param name="employerId">The ID of the employer making the request.</param>
     /// <returns>200 OK if successful, 404 if worker not found.</returns>
+    [Authorize]
     [HttpPost("AccessRequests")]
     public async Task<ActionResult> CreateRequest([FromBody]CreateRequestUsecaseDTO request)
     {
         // get employer id from the user's token
-        var employerIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        // var employerIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        // Console.WriteLine("Print:"+employerIdClaim);
+        var employerIdClaim = User.FindFirst("sub")?.Value
+                              ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Console.WriteLine("Print:" + employerIdClaim);
         if (employerIdClaim == null)
         {
             return Unauthorized();
