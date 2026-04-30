@@ -38,9 +38,9 @@ public class WorkerController : ControllerBase
     }
 
     [HttpGet("{workerId}/requests")]
-    public async Task<ActionResult<Request>> GetRequestReason(Guid workerId, Guid requestId)
+    public async Task<ActionResult<Request>> GetRequestReason(Guid requestId)
     {
-        var result = await _requestService.GetByRequestIdAsync(workerId, requestId);
+        var result = await _requestService.GetByRequestIdAsync(requestId);
 
         if (result == null)
         {
@@ -62,5 +62,6 @@ public class WorkerController : ControllerBase
         return Ok(result);
 
     }
+
 
 }
