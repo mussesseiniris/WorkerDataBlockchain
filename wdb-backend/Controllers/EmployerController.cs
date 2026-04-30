@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Abstractions;
@@ -48,14 +49,14 @@ public class EmployerController : ControllerBase
     /// <param name="email">The worker's email address.</param>
     /// <returns>200 OK with list of worker info, or 4404 Notfound if worker not found</returns>
     [HttpGet]
-    public async Task<ActionResult<List<WorkerInfo>>> GetWorkerInfosByEmail(string email)
+    public async Task<ActionResult<List<WorkerInfoDto>>> GetWorkerInfosByEmail(string email)
     {
         try
         {
             var workerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(email);
             if (workerInfos.Count == 0)
             {
-                return Ok(new List<WorkerInfo>());
+                return Ok(new List<WorkerInfoDto>());
             }
 
             var result = workerInfos.Select(w => new WorkerInfoDto()
@@ -82,7 +83,14 @@ public class EmployerController : ControllerBase
     [HttpPost("AccessRequests")]
     public async Task<ActionResult> CreateRequest([FromBody]CreateRequestUsecaseDTO request)
     {
-        var employerId = Guid.Parse("019d994a-ae4c-704b-b416-da6ba9ab32ae");
+        // get employer id from the user's token
+        var employerIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (employerIdClaim == null)
+        {
+            return Unauthorized();
+        }
+        var employerId =Guid.Parse(employerIdClaim);
+
         var allWorkerInfos = await _findWorkerInfosUsecase.FindWorkerInfosByEmail(request.Email);
         if (allWorkerInfos == null || allWorkerInfos.Count == 0)
         {
