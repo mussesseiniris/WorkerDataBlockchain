@@ -18,4 +18,8 @@ public interface IEmployerRepository
 
     // delete employer by email
     Task<Employer> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    //get employer info by id
+    Task<Employer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
 }

@@ -19,4 +19,5 @@ public interface IPermissionRepository
     // get all permissions by worker id
     Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 
+
 }
