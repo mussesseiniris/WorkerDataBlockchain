@@ -13,4 +13,8 @@ public interface IUser
     DateTime CreatedAt { get; set; }
 
     bool Verified { get; set; }
+
+    // add for blockchain
+    string? BlockchainAddress { get; set; }
+    string? PrivateKey { get; set; }
 }
