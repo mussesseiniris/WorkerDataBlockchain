@@ -3,9 +3,10 @@ using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
 
+
 namespace wdb_backend.Services;
 
-public class EmployerRepoImpl:IEmployerRepository
+public class EmployerRepoImpl : IEmployerRepository
 {
     private readonly AppDbContext _context;
 
@@ -39,4 +40,14 @@ public class EmployerRepoImpl:IEmployerRepository
     {
         throw new NotImplementedException();
     }
+
+    //GetByIdAsync()
+    //get all information of employer by employer id
+    //name, email, blockchainaddress and privatekey of a employer can be extracted from this method
+
+    public async Task<Employer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Employers.FirstOrDefaultAsync(employer => employer.Id == id, cancellationToken);
+    }
+
 }
