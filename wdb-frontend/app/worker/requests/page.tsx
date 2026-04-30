@@ -1,9 +1,8 @@
 "use client";
 // Worker requests: view, approve, or reject employer data access requests
-// import { FetchApi } from '@lib/api';
-
+import { FetchApi } from '../../../lib/api';
 import { useState, ReactNode } from 'react';
-import RequestRow, { Request } from "../../components/RequestRow"
+import RequestRow, { Row, Field } from "../../components/RequestRow"
 
 interface TabProps {
     id: string;
@@ -11,30 +10,26 @@ interface TabProps {
     children?: ReactNode;
 }
 
-const requests: Request[] = [
-  {
-    id: "1",
-    company: "Company",
-    date: "05.01.2026 06:00 AM",
-    fields: [
-      { label: "Address", checked: false },
-      { label: "Phone Number", checked: false },
-      { label: "Gender", checked: false },
-    ],
-    reason: "Reason",
-  },
-  {
-    id: "2",
-    company: "Company",
-    date: "05.01.2026 06:00 AM",
-    fields: [
-      { label: "Address", checked: false },
-      { label: "Phone Number", checked: false },
-      { label: "Gender", checked: false },
-    ],
-    reason: "Reason",
-  }
-]
+type Permission = {
+    id: string;
+    info_id: string;
+    request_id: string;
+    status: string;
+}
+
+type Request = {
+    id: string;
+    created_at: string;
+    employer_id: string;
+    worker_id: string;
+    reason: string;
+}
+
+type WorkerInfo = {
+    id: string;
+    desc: string; 
+}
+
 
 const tabs: TabProps[] = [
     {
@@ -42,9 +37,7 @@ const tabs: TabProps[] = [
         label: "Active Request",
         children: 
         <div>
-            {requests.map((r) => (
-                <RequestRow key={r.id} {...r}/>
-            ))}
+            //List of RequestRows
         </div>
     },
     {
@@ -63,10 +56,49 @@ const tabs: TabProps[] = [
 
 export default function Page() { 
     
-   const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
-   const activeContent = tabs.find((t) => t.id == activeTab)?.children;
-    
-    
+    const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
+    const activeContent = tabs.find((t) => t.id == activeTab)?.children;
+   
+    const [permissions, setPermissions] = useState<Permission[]>([]);
+    const [request, setRequests] = useState<Request[]>([]);
+    const [workerInfo, setWorkerInfo] = useState<WorkerInfo[]>([]);
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+   
+    async function getRows(workerid: string) {
+        setIsLoading(true);
+        setErrorMsg('');
+        try {
+            var requests = await FetchApi(
+                `/api/Worker/${workerid}/requests`,
+            )
+            if (!requests) {
+                alert ("There are no current requests");
+                return;
+            }
+            setRequests(requests);
+        
+
+            var permissions = await FetchApi(
+                `/api/Worker/${workerid}/permissions`,
+            );
+            setPermissions(permissions);
+
+            
+            var workerinfo = await FetchApi(
+                `/api/Worker/${workerid}/info`,
+            )
+            setWorkerInfo(workerinfo);
+
+
+        } catch (error) {
+            setErrorMsg(`${error}`)
+        } finally {
+            setIsLoading(false);
+        }
+   }
+
     return (
         <main className="p-8">
             <div>
@@ -80,8 +112,7 @@ export default function Page() {
                     className={`
                         px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer 
                         ${activeTab === id ?  "border-gray-900 text-gray-900 dark:border-white dark:text-white": 
-                        "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                        }`}
+                        "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
                 >
                     {label}
                 </button>
