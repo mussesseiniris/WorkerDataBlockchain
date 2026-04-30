@@ -15,11 +15,15 @@ public class AuthService<T> where T : class, IUser, new()
     // need jwt service to generate token used for id
     private readonly IJwtTokenService _jwtservice;
 
-    public AuthService(IUserRepository<T> userRepo, IPasswordHasher hasher, IJwtTokenService jwtService)
+    // add for blockchain
+    private readonly IBlockchainService _blockchainService;
+
+    public AuthService(IUserRepository<T> userRepo, IPasswordHasher hasher, IJwtTokenService jwtService, IBlockchainService blockchainService)
     {
         _userRepo = userRepo;
         _hasher = hasher;
         _jwtservice = jwtService;
+        _blockchainService = blockchainService;  // add for blockchain
     }
 
     // handle register logic
@@ -38,13 +42,18 @@ public class AuthService<T> where T : class, IUser, new()
         bool existsFlag = await _userRepo.EmailExistsAsync(email, ct);
         if (existsFlag) return (false, "Email already exists.");
 
+        // generate the address and key for this use
+        var keyPair = _blockchainService.GenerateKeyPair();
+
         // create user and then save to database, note: the password should be hashed to be stored into database
         T user = new T
         {
             Name = userName,
             Email = email,
             Password = _hasher.HashPassword(request.Password),
-            Verified = false
+            Verified = false,
+            BlockchainAddress = keyPair.BlockchainAddress,
+            PrivateKey = keyPair.PrivateKey
         };
 
         // save user into database
