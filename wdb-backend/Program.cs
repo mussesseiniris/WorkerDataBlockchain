@@ -26,7 +26,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("SupabaseConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
