@@ -4,6 +4,7 @@ using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
 using wdb_backend.Services;
+
 namespace wdb_backend.Controllers;
 
 /// <summary>
@@ -11,7 +12,7 @@ namespace wdb_backend.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class WorkerController:ControllerBase
+public class WorkerController : ControllerBase
 {
     private readonly IPermissionService _permissionService;
     private readonly IRequestService _requestService;

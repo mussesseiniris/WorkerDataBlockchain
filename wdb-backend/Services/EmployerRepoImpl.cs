@@ -15,22 +15,20 @@ public class EmployerRepoImpl : IEmployerRepository
         _context = context;
     }
 
-    private readonly IEmployerRepository _employerRepository;
-
-
-    public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await _context.Employers.AnyAsync(employer => employer.Email == email, cancellationToken);
     }
 
-    public Task<Employer> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<Employer?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await _context.Employers.FirstOrDefaultAsync(employer => employer.Email.Equals(email), cancellationToken);
     }
 
-    public Task AddAsync(Employer employer, CancellationToken cancellationToken = default)
+    public async Task AddAsync(Employer employer, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await _context.Employers.AddAsync(employer, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public Task<Employer> UpdateByEmailAsync(string email, CancellationToken cancellationToken = default)
