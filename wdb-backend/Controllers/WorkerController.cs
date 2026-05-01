@@ -17,12 +17,14 @@ public class WorkerController : ControllerBase
     private readonly IRequestService _requestService;
 
     private readonly IWorkerInfoService _workerInfoService;
+    private readonly IEmployerService _employerService;
 
-    public WorkerController(IPermissionService permissionService, IRequestService requestService, IWorkerInfoService workerInfoService)
+    public WorkerController(IPermissionService permissionService, IRequestService requestService, IWorkerInfoService workerInfoService, IEmployerService employerService)
     {
         _permissionService = permissionService;
         _requestService = requestService;
         _workerInfoService = workerInfoService;
+        _employerService = employerService;
     }
 
     [HttpGet("{workerId}/permissions")]
@@ -92,25 +94,28 @@ public class WorkerController : ControllerBase
         {
             var reqPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
 
-            var workerInfos = reqPermissions.Select(p =>
+            var workerInfos = new List<FieldResponse>();
+            foreach (var p in reqPermissions)
             {
                 var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
-                return new FieldResponse
+                workerInfos.Add(new FieldResponse
                 {
                     Id = p.Id.ToString(),
                     Label = info?.Desc ?? "Unknown",
                     Checked = false
-                };
-            }).ToList();
-            return new RequestRowResponse
+                });
+            }
+
+            var employer = await _employerService.GetEmployerInfoAsync(req.EmployerId);
+            rows.Add(new RequestRowResponse
             {
                 Id = req.Id.ToString(),
-                Company = req.EmployerId.ToString(),
+                Company = employer?.Name.ToString() ?? "Unknown",
                 Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
                 Fields = workerInfos,
                 Reason = req.Reason
-            };
-        }).ToList();
+            });
+        };
 
         return Ok(rows);
 
