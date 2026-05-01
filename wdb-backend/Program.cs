@@ -41,7 +41,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins("http://localhost:3001")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -70,7 +70,7 @@ builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
 builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
 
 var app = builder.Build();
-app.UseCors("FrontendPolicy");
+//app.UseCors("FrontendPolicy");
 
 app.UseCors("AllowFrontend");
 

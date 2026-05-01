@@ -26,7 +26,7 @@ export default function RequestRow({ id, company, date, fields, reason }: Row) {
     };
 
     return (
-        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
 
             <div className="flex flex-col gap-2">
 
@@ -36,7 +36,7 @@ export default function RequestRow({ id, company, date, fields, reason }: Row) {
                 <div className="flex gap-3 flex-wrap">
                     {checkedFields.map((field) => (
                         <label key={field.label}
-                            className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-1 text-sm cursor-pointer">
+                            className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={field.checked}
