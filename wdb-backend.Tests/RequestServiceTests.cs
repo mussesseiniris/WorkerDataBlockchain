@@ -37,4 +37,26 @@ public class RequestServiceTests
         // Act & Assert 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.CreateAsync(Guid.NewGuid(), Guid.NewGuid(), reason));
     }
+
+    [Fact]
+public async Task GetAllByEmployerIdAsync_validEmployer_ReturnsAllRequests()
+{
+    // Arrange
+    var mockRepo = new Mock<IRequestRepository>();
+    var requestService = new RequestServiceImpl(mockRepo.Object);
+    var employerId = Guid.NewGuid();
+    var requests = new List<Request>();
+    var workerId = Guid.NewGuid();
+    var request1= new Request {Id=Guid.NewGuid(),Reason="check basic details",EmployerId=employerId,WorkerId=workerId};
+    requests.Add(request1);
+    mockRepo.Setup(r=>r.GetAllByEmployerIdAsync(employerId)).ReturnsAsync(requests);
+    // Act
+    var resultRequests = await requestService.GetAllByEmployerIdAsync(employerId);
+
+    // Assert
+    Assert.NotNull(resultRequests);
+    Assert.Single(resultRequests);
+    Assert.Equal(request1.Id,resultRequests[0].Id);
+}
+
 }
