@@ -63,6 +63,8 @@ builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
 builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
 builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
+builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 // Services
 builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
