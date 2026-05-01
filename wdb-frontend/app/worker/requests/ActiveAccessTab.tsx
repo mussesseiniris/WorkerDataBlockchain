@@ -7,9 +7,10 @@ import { FetchApi } from "../../../lib/api";
 interface ActiveAccessTabProps {
     workerId: string;
     onRevoke: (itemId: string, workerInfoId: string[]) => void;
+    refreshTrigger: number;
 }
 
-export default function ActiveAccessTab({ workerId, onRevoke }: ActiveAccessTabProps) {
+export default function ActiveAccessTab({ workerId, onRevoke, refreshTrigger }: ActiveAccessTabProps) {
     const [permissions, setPermissions] = useState<ActiveRowData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -28,7 +29,7 @@ export default function ActiveAccessTab({ workerId, onRevoke }: ActiveAccessTabP
                 )
             )
             .finally(() => setIsLoading(false));
-    }, [workerId]);
+    }, [workerId, refreshTrigger]);
 
     if (isLoading) return <p className="text-sm text-gray-500">Loading...</p>;
     if (permissions.length === 0) return <p className="text-sm text-gray-500">No active access grants.</p>;

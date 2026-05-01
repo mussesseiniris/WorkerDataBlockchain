@@ -22,6 +22,7 @@ export default function Page() {
     const [rows, setRows] = useState<Row[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [activeAccessRefresh, setActiveAccessRefresh] = useState(0);
 
     const workerId = "019d9918-c72f-7e3e-baa0-9de869651370";
 
@@ -66,8 +67,20 @@ export default function Page() {
                 <div>
                     <ActiveAccessTab
                         workerId={workerId}
-                        onRevoke={(permissionId, workerInfoId) => console.log("Revoke", permissionId, workerInfoId)}
+                        refreshTrigger={activeAccessRefresh}
+                        onRevoke={async (_requestId, workerInfoIds) => {
+                            try {
+                                await Promise.all(
+                                    workerInfoIds.map((id) => FetchApi(`/api/permission/${id}/reject`))
+                                );
+                                setActiveAccessRefresh((n) => n + 1);
+                                getRows(workerId);
+                            } catch (error) {
+                                alert(`Revoke failed: ${error}`);
+                            }
+                        }}
                     />
+
                 </div>
         }
     ];
