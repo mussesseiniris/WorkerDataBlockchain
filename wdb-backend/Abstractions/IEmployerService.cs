@@ -13,4 +13,8 @@ public interface IEmployerService
     Task<Employer> UpdateAsync(string email, Employer employer, CancellationToken cancellationToken = default);
 
     Task<Employer> DeleteAsync(string email, CancellationToken cancellationToken = default);
+
+    //get employer information such as name/email/private key/blockchain address
+    Task<Employer?> GetEmployerInfoAsync(Guid id, CancellationToken cancellationToken = default);
+
 }

@@ -3,8 +3,15 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class RequestServiceImpl:IRequestService
+public class RequestServiceImpl : IRequestService
 {
+    private readonly IRequestRepository _requestRepository;
+
+    public RequestServiceImpl(IRequestRepository requestRepository)
+    {
+        _requestRepository = requestRepository;
+    }
+
     public Task<Request> CreateAsync(Guid employerId, Guid workerId, Request request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -15,8 +22,16 @@ public class RequestServiceImpl:IRequestService
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _requestRepository.GetAllByWorkerIdAsync(workerId, cancellationToken);
+        return result;
     }
+
+    public async Task<Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        var result = await _requestRepository.GetByRequestIdAsync(requestId, cancellationToken);
+        return result;
+    }
+
 }

@@ -5,7 +5,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class EmployerRepoImpl:IEmployerRepository
+public class EmployerRepoImpl : IEmployerRepository
 {
     private readonly AppDbContext _context;
 
@@ -38,5 +38,10 @@ public class EmployerRepoImpl:IEmployerRepository
     public Task<Employer> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<Employer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Employers.FirstOrDefaultAsync(employer => employer.Id == id, cancellationToken);
     }
 }
