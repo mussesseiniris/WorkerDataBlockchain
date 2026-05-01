@@ -84,10 +84,12 @@ builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
 builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
 
 var app = builder.Build();
+//app.UseCors("FrontendPolicy");
 
-// ============================
-// middleware the order matters!
-// ============================
+app.UseCors("AllowFrontend");
+
+app.MapControllers();
+app.MapOpenApi();
 
 if (app.Environment.IsDevelopment())
 {
