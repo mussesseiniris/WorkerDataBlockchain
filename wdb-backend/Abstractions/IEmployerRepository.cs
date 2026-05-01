@@ -19,5 +19,5 @@ public interface IEmployerRepository : IUserRepository<Employer>
     // // delete employer by email
     // Task<Employer> DeleteByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<Employer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<List<Employer>> GetDistinctEmployers (CancellationToken cancellationToken = default);
+    Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default);
 }

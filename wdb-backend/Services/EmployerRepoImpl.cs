@@ -52,7 +52,7 @@ public class EmployerRepoImpl : IEmployerRepository
         return await _context.Employers.FirstOrDefaultAsync(employer => employer.Id == id, cancellationToken);
     }
 
-    public async Task<List<Employer>> GetDistinctEmployers (CancellationToken cancellationToken = default)
+    public async Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default)
     {
         return await _context.Employers.Distinct().ToListAsync(cancellationToken);
     }
