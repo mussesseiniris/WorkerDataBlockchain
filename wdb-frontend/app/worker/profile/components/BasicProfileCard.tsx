@@ -13,6 +13,7 @@ interface BasicProfileCardProps {
 // main method : define the variable of this component and read danamic variable's value then save final value
 // return{} define the ui logic 
 export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps) {
+
     // define the variable in order to allow avriavle could be danamic
     const [isEditing, setIsEdit] = useState(false)
     const [editFirstName, setEditFirstName] = useState('')
@@ -47,6 +48,47 @@ export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps
     }, [data])
     //  save final value
     const handleDone = async () => {
+
+        if (!editFirstName.trim()) {
+            alert('First name cannot be empty')
+            return
+        }
+        if (!editLastName.trim()) {
+            alert('Last name cannot be empty')
+            return
+        }
+        if (!editEmail.trim()) {
+            alert('Email cannot be empty')
+            return
+        }
+        if (!editPhone.trim()) {
+            alert('Phone number cannot be empty')
+            return
+        }
+        if (!editPostcode.trim()) {
+            alert('Post code cannot be empty')
+            return
+        }
+        if (!editPhone.trim()) {
+            alert('Phone number cannot be empty')
+            return
+        }
+        if (!editGendar.trim()) {
+            alert('Gender cannot be empty')
+            return
+        }
+        if (!editCountry.trim()) {
+            alert('Country cannot be empty')
+            return
+        }
+        if (!editCity.trim()) {
+            alert('City cannot be empty')
+            return
+        }
+        if (!editStreet.trim()) {
+            alert('Street cannot be empty')
+            return
+        }
 
         await onSave('firstname', editFirstName)
         await onSave('lastname', editLastName)

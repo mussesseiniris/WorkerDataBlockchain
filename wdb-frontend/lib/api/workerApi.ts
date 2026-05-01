@@ -1,6 +1,6 @@
 import { WorkerInfoItem } from "@/app/worker/profile/type";
 
-const BASE_URL = '/api/workerinfo'
+const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5258'}/api/workerinfo`
 
 
 

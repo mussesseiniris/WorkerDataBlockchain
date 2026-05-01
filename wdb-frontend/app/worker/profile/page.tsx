@@ -6,10 +6,9 @@ import { useEffect, useState } from 'react'
 import { WorkerInfoItem } from './type'
 import BasicProfileCard from './components/BasicProfileCard'
 import { getWorkerProfile, updateWorkerProfile } from '@/lib/api/workerApi'
+import { useRouter } from 'next/navigation'
 
 
-const workerId = '1234'
-const testName = 'John'
 
 // define a shared component that display the function/ux will finish in next stage.
 const PlaceholderCard = ({ title }: { title: string }) => (
@@ -25,29 +24,48 @@ const PlaceholderCard = ({ title }: { title: string }) => (
 // Note: workerId is hardcoded for testing. Will be replaced
 // with real user context after login integration.
 export default function ProfilePage() {
-    const [allData, setAllData] = useState<WorkerInfoItem[]>([])
+    const router = useRouter()
+    const [allDate, setAllDate] = useState<WorkerInfoItem[]>([])
+    const [workerId, setWorkerId] = useState('')
+    const [userName, setUserName] = useState('')
 
     useEffect(() => {
+        const id = localStorage.getItem('userId')
+        const name = localStorage.getItem('userName')
+        if (!id || !name) {
+            router.push('/login')
+            return
+        }
+        setWorkerId(id)
+        setUserName(name ?? '')
+
         const fetchData = async () => {
-            const data = await getWorkerProfile(workerId)
-            setAllData(Array.isArray(data) ? data : [data])
+            try {
+                const data = await getWorkerProfile(id)
+                setAllDate(Array.isArray(data) ? data : [data])
+            } catch (error) {
+                console.error('Failed to fetch worker profile:', error)
+            }
         }
         fetchData()
-    }, [])
+    }, [router])
 
-    const handleSave = async (desc: string, value: string) => {
-        await updateWorkerInfo(workerId, desc, value)
-        const updated = await getWorkerProfile(workerId)
-        setAllData(Array.isArray(updated) ? updated : [updated])
+    const handlesave = async (desc: string, value: string) => {
+        try {
+            await updateWorkerProfile(workerId, desc, value)
+            const updatedData = await getWorkerProfile(workerId)
+            setAllDate(Array.isArray(updatedData) ? updatedData : [updatedData])
+        } catch (error) {
+            console.error('Failed to update worker profile:', error)
+        }
     }
 
     return (
         <div className="flex flex-col h-screen bg-gray-50">
             <TopBar />
             <div className="flex-1 overflow-y-auto px-8 py-8 flex flex-col gap-6">
-                <UserInfoCard data={allData} workerId={workerId} userName={testName} />
-                <BasicProfileCard data={allData} onSave={async (handleSave) => {
-                }} />
+                <UserInfoCard data={allDate} workerId={workerId} userName={userName} />
+                <BasicProfileCard data={allDate} onSave={handlesave} />
                 <PlaceholderCard title="Health Considerations" />
                 <PlaceholderCard title="Emergency Contact" />
                 <PlaceholderCard title="Certifications" />
@@ -56,13 +74,5 @@ export default function ProfilePage() {
             </div>
         </div>
     )
-}
-
-function updateWorkerInfo(workerId: any, desc: string, value: string) {
-    throw new Error('Function not implemented.')
-}
-
-function getWorkerInfo(workerId: any) {
-    throw new Error('Function not implemented.')
 }
 
