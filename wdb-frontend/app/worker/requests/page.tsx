@@ -1,8 +1,9 @@
 "use client";
 // Worker requests: view, approve, or reject employer data access requests
 import { FetchApi } from '../../../lib/api';
-import { useState, ReactNode } from 'react';
+import { useState, ReactNode, useEffect } from 'react';
 import RequestRow, { Row, Field } from "../../components/RequestRow"
+import RequestRowTab from './ActiveRequestTab';
 
 interface TabProps {
     id: string;
@@ -10,34 +11,48 @@ interface TabProps {
     children?: ReactNode;
 }
 
-type Permission = {
-    id: string;
-    info_id: string;
-    request_id: string;
-    status: string;
-}
 
-type Request = {
-    id: string;
-    created_at: string;
-    employer_id: string;
-    worker_id: string;
-    reason: string;
-}
+export default function Page() { 
+    
+    const [activeTab, setActiveTab] = useState<string>("active-request");
+    const [rows, setRows] = useState<Row[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
-type WorkerInfo = {
-    id: string;
-    desc: string; 
-}
+    const workerId = "019d9918-c72f-7e3e-baa0-9de869651370";
 
+    useEffect(() => {
+        getRows(workerId);
+    }, []);
+   
+    async function getRows(workerid: string) {
+        setIsLoading(true);
+        setErrorMsg('');
+        try {
+            var rows = await FetchApi(
+                `/api/Worker/${workerid}/rows`,
+            )
+            if (!rows) {
+                alert ("There are no current requests");
+                return;
+            }
+            setRows(rows);
+        } catch (error) {
+            setErrorMsg(`${error}`)
+        } finally {
+            setIsLoading(false);
+        }
+   }
 
-const tabs: TabProps[] = [
+   const tabs: TabProps[] = [
     {
         id: "active-request",
         label: "Active Request",
         children: 
         <div>
-            //List of RequestRows
+            {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
+            {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
+            {!isLoading && <RequestRowTab requests={rows} />}
         </div>
     },
     {
@@ -50,54 +65,10 @@ const tabs: TabProps[] = [
             </p>  
         </div>
     }
-]
+    ];
 
+    const activeContent = tabs.find((t) => t.id === activeTab)?.children;
 
-
-export default function Page() { 
-    
-    const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
-    const activeContent = tabs.find((t) => t.id == activeTab)?.children;
-   
-    const [permissions, setPermissions] = useState<Permission[]>([]);
-    const [request, setRequests] = useState<Request[]>([]);
-    const [workerInfo, setWorkerInfo] = useState<WorkerInfo[]>([]);
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-   
-    async function getRows(workerid: string) {
-        setIsLoading(true);
-        setErrorMsg('');
-        try {
-            var requests = await FetchApi(
-                `/api/Worker/${workerid}/requests`,
-            )
-            if (!requests) {
-                alert ("There are no current requests");
-                return;
-            }
-            setRequests(requests);
-        
-
-            var permissions = await FetchApi(
-                `/api/Worker/${workerid}/permissions`,
-            );
-            setPermissions(permissions);
-
-            
-            var workerinfo = await FetchApi(
-                `/api/Worker/${workerid}/info`,
-            )
-            setWorkerInfo(workerinfo);
-
-
-        } catch (error) {
-            setErrorMsg(`${error}`)
-        } finally {
-            setIsLoading(false);
-        }
-   }
 
     return (
         <main className="p-8">

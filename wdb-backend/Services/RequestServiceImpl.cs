@@ -22,9 +22,10 @@ public class RequestServiceImpl:IRequestService
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _requestRepository.GetAllByWorkerIdAsync(workerId, cancellationToken);
+        return result;
     }
 
     public async Task <Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)

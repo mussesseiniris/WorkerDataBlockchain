@@ -67,25 +67,25 @@ public class WorkerController : ControllerBase
 
     public class FieldResponse
     {
-        public string Id { get; set; }
-        public string Label { get; set; }
-        public bool Checked { get; set; } = false;
+        public required string Id { get; set; }
+        public required string Label { get; set; }
+        public required bool Checked { get; set; } = false;
     }
 
     public class RequestRowResponse
     {
-        public string Id { get; set; }
-        public string Company { get; set; }
-        public string Date { get; set; }
-        public List<FieldResponse> Fields { get; set; }
-        public string Reason { get; set; }
+        public required string Id { get; set; }
+        public required string Company { get; set; }
+        public required string Date { get; set; }
+        public required List<FieldResponse> Fields { get; set; }
+        public required string Reason { get; set; }
     }
 
     [HttpGet("{workerId}/rows")]
     public async Task<ActionResult> GetRows(Guid workerId)
     {
         var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
-        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
         var workerInfo = await _workerInfoService.GetAllAsync(workerId);
 
         var rows = requests.Select(req =>
@@ -98,7 +98,7 @@ public class WorkerController : ControllerBase
                 return new FieldResponse
                 {
                     Id = p.Id.ToString(),
-                    Label = info.Desc,
+                    Label = info?.Desc ?? "Unknown",
                     Checked = false
                 };
             }).ToList();
