@@ -9,11 +9,8 @@ public interface IRequestRepository
     Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default);
 
     // query all requests by employer id
-    Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default);
+    Task<List<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default);
 
     // query all requests by worker id
     Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
-
-
-
 }

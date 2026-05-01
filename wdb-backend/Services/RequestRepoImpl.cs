@@ -22,7 +22,7 @@ public class RequestRepoImpl : IRequestRepository
     }
 
 
-    public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
+    public Task<List<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

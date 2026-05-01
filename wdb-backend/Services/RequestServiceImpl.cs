@@ -15,9 +15,10 @@ public class RequestServiceImpl : IRequestService
         return resultRequest;
     }
 
-    public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var resultRequests = await _requestRepo.GetAllByEmployerIdAsync(employerId,default);
+        return resultRequests;
     }
 
     public Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
