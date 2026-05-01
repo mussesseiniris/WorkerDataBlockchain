@@ -125,5 +125,55 @@ public class WorkerController : ControllerBase
 
     }
 
+    public class ActiveAccessRow
+    {
+        public required string Id { get; set; }
+        public required string Company { get; set; }
+        public required string Date { get; set; }
+        public required List<FieldResponse> WorkerInfo { get; set; }
+        public required string Reason { get; set; }
+    }
+
+    [HttpGet("{workerId}/active-access")]
+    public async Task<ActionResult> GetActiveAccess(Guid workerId)
+    {
+        var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 1);
+        var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+
+        var rows = new List<ActiveAccessRow>();
+
+        foreach (var req in requests)
+        {
+            var approvedPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
+            if (!approvedPermissions.Any()) continue;
+
+            var fields = new List<FieldResponse>();
+            foreach (var p in approvedPermissions)
+            {
+                var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
+                fields.Add(new FieldResponse
+                {
+                    Id = p.Id.ToString(),
+                    Label = info?.Desc ?? "Unknown",
+                    Checked = false
+                });
+            }
+
+            var employer = await _employerService.GetEmployerInfoAsync(req.EmployerId);
+            rows.Add(new ActiveAccessRow
+            {
+                Id = req.Id.ToString(),
+                Company = employer?.Name.ToString() ?? "Unknown",
+                Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
+                WorkerInfo = fields,
+                Reason = req.Reason
+            });
+        }
+
+        return Ok(rows);
+    }
+
+
 
 }

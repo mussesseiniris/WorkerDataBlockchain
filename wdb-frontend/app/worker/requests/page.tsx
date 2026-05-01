@@ -65,34 +65,9 @@ export default function Page() {
             children:
                 <div>
                     <ActiveAccessTab
-                        permission={[
-                            {
-                                id: "1",
-                                company: "Acme Corp",
-                                date: "2025-01-15",
-                                reason: "Employment verification",
-                                workerInfo: [
-                                    { id: "f1", label: "Name" },
-                                    { id: "f2", label: "Email" },
-                                    { id: "f3", label: "Work History" },
-                                ],
-                            },
-                            {
-                                id: "2",
-                                company: "Globex Inc",
-                                date: "2025-03-02",
-                                reason: "Selling your data to other people",
-                                workerInfo: [
-                                    { id: "f4", label: "Name" },
-                                    { id: "f5", label: "Phone" },
-                                ],
-                            },
-                        ]}
+                        workerId={workerId}
                         onRevoke={(permissionId, workerInfoId) => console.log("Revoke", permissionId, workerInfoId)}
                     />
-
-
-
                 </div>
         }
     ];
