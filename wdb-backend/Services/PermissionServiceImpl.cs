@@ -33,7 +33,7 @@ public class PermissionServiceImpl:IPermissionService
     public async Task<Permission> UpdateAsync(Guid permissionId, int status, CancellationToken cancellationToken = default)
     {
         var permission = await _permissionRepository.GetOneAsync(permissionId, cancellationToken)??throw new KeyNotFoundException();
-        if (permission.Status == PermissionStatus.Pending)
+        if (permission.Status != PermissionStatus.Pending)
         {
             throw new InvalidOperationException($"Permission {permissionId} cannot be udpated as it is no longer pending");
         } 
