@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FetchApi } from '../../lib/api';
 
+
 export interface Field {
     id: string;
     label: string;
@@ -32,7 +33,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
 
     async function changePermission(status: "approve"|"reject") {
         const checkedIds = checkedFields.filter((f) => f.checked).map((f)=> f.id);
-        
+        onComplete(id);
         try {
             await Promise.all(
                 checkedIds.map((permissionid) =>
@@ -41,7 +42,6 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
                     }
                 ))
             );
-            onComplete(id);
             } catch (error) {
                 setErrorMsg(`${error}`)
             }

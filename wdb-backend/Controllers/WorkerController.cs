@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Ocsp;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
@@ -84,45 +86,96 @@ public class RequestRowResponse
     public required string Reason { get; set; }
     }
 
+    // [HttpGet("{workerId}/rows")]
+    // public async Task<ActionResult> GetRows(Guid workerId)
+    // {
+    //     var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
+    //     var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
+    //     var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+       
+    //     var employers = await _employerService.GetDistinctEmployers();
+    //     var employerMap = employers.ToDictionary(e => e.Id);
+
+    //     var rows = new List<RequestRowResponse>();
+
+    //     foreach (var req in requests)
+    //     {
+    //        var reqPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
+
+    //        var workerInfos = new List<FieldResponse>();
+    //        foreach (var p in reqPermissions)
+    //        {
+    //            var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
+    //            workerInfos.Add(new FieldResponse
+    //            {
+    //                Id = p.Id.ToString(),
+    //                Label = info?.Desc ?? "Unknown",
+    //                Checked = false
+    //            });
+    //        }
+
+    //         employerMap.TryGetValue(req.EmployerId, out var employer);
+    //         rows.Add(new RequestRowResponse
+    //         {
+    //             Id = req.Id.ToString(),
+    //             Company = employer?.Name.ToString() ?? "Unknown",
+    //             Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
+    //             Fields = workerInfos,
+    //             Reason = req.Reason
+    //         });
+    //     };
+
+    //     return Ok(rows);
+        
+    // }
+
     [HttpGet("{workerId}/rows")]
     public async Task<ActionResult> GetRows(Guid workerId)
     {
-       var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
-       var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
-       var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+        var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
+        var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+        var groupedPermissions = permissions.GroupBy(p => p.RequestId);
+
        
-       var rows = new List<RequestRowResponse>();
+        var employers = await _employerService.GetDistinctEmployers();
+        var employerMap = employers.ToDictionary(e => e.Id);
 
-       foreach (var req in requests)
-       {
-           var reqPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
+        var rows = new List<RequestRowResponse>();
 
-           var workerInfos = new List<FieldResponse>();
-           foreach (var p in reqPermissions)
-           {
-               var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
-               workerInfos.Add(new FieldResponse
-               {
-                   Id = p.Id.ToString(),
-                   Label = info?.Desc ?? "Unknown",
-                   Checked = false
-               });
-           }
-
-           var employer = await _employerService.GetEmployerInfoAsync(req.EmployerId);
+        foreach (var group in groupedPermissions)
+        {   
+            var request = requests.FirstOrDefault(p => p.Id == group.Key);
+            if (request == null) continue;
+            
+            employerMap.TryGetValue(request.EmployerId, out var employer);
+           
+            var workerInfos = new List<FieldResponse>();
+            foreach (var p in group)
+            {
+                var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
+                workerInfos.Add(new FieldResponse
+                {
+                    Id = p.Id.ToString(),
+                    Label = info?.Desc ?? "Unknown",
+                    Checked = false
+                });      
+            } 
             rows.Add(new RequestRowResponse
             {
-                Id = req.Id.ToString(),
+                Id = request.Id.ToString(),
                 Company = employer?.Name.ToString() ?? "Unknown",
-                Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
+                Date = request.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
                 Fields = workerInfos,
-                Reason = req.Reason
-            });
-       };
-
-        return Ok(rows);
+                Reason = request.Reason
+            }); 
+                
+        };
+        return Ok(rows);  
         
     }
-
-
+ 
 }
+
+
+
