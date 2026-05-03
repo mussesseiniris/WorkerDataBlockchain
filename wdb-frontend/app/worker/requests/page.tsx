@@ -18,20 +18,22 @@ export default function Page() {
     const [rows, setRows] = useState<Row[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-
-    const workerId = "019d9918-c72f-7e3e-baa0-9de869651370";
+    const token = localStorage.getItem('accessToken');
 
     useEffect(() => {
-        getRows(workerId);
+        getRows();
     }, []);
    
-    async function getRows(workerid: string) {
+    async function getRows() {
         setIsLoading(true);
         setErrorMsg('');
         try {
             var rows = await FetchApi(
-                `/api/Worker/${workerid}/rows`,
-            )
+                `/api/Worker/rows`, {
+                headers: {
+                Authorization: `Bearer ${token}`,
+                },
+            });
             if (!rows) {
                 alert ("There are no current requests");
                 return;

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { FetchApi } from '../../lib/api';
 
-
 export interface Field {
     id: string;
     label: string;
