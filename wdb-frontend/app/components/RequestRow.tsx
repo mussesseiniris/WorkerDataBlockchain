@@ -15,9 +15,11 @@ export interface Row {
     date:string;
     fields: Field[];
     reason: string;
+    onComplete: (id:string) => void;
 }
 
-export default function RequestRow({ id, company, date, fields, reason}: Row){
+
+export default function RequestRow({ id, company, date, fields, reason, onComplete}: Row){
     const [checkedFields, setCheckedFields] = useState<Field[]>(fields);
     const [errorMsg, setErrorMsg] = useState('');
     
@@ -33,13 +35,13 @@ export default function RequestRow({ id, company, date, fields, reason}: Row){
         
         try {
             await Promise.all(
-                checkedIds.map((permissionId) =>
-                FetchApi(`/api/Permission/${permissionId}/${status}`,{
-                    method: "PATCH"
-                })
-            )
-
+                checkedIds.map((permissionid) =>
+                    FetchApi(`/api/Permission/${permissionid}/${status}`,{
+                        method: "PATCH"
+                    }
+                ))
             );
+            onComplete(id);
             } catch (error) {
                 setErrorMsg(`${error}`)
             }
