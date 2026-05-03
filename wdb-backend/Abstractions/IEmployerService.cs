@@ -17,4 +17,5 @@ public interface IEmployerService
     //get employer information such as name/email/private key/blockchain address
     Task<Employer?> GetEmployerInfoAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default);
 }

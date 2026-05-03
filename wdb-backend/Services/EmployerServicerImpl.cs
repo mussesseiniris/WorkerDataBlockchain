@@ -41,4 +41,9 @@ public class EmployerServicerImpl : IEmployerService
     {
         return await _employerRepository.GetByIdAsync(id, cancellationToken);
     }
+
+    public async Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default)
+    {
+        return await _employerRepository.GetDistinctEmployers(cancellationToken);
+    }
 }
