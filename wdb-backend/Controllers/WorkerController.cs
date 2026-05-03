@@ -1,11 +1,14 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Ocsp;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
 using wdb_backend.Services;
+using System.Security.Claims;
+
 namespace wdb_backend.Controllers;
 
 /// <summary>
@@ -128,12 +131,17 @@ public class WorkerController : ControllerBase
 
     // }
 
-    [HttpGet("{workerId}/rows")]
-    public async Task<ActionResult> GetRows(Guid workerId)
+    [Authorize]
+    [HttpGet("rows")]
+    public async Task<ActionResult> GetRows()
     {
-        var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
-        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
-        var workerInfo = await _workerInfoService.GetAllAsync(workerId);
+        var workerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (workerId == null) return Unauthorized();
+        var workerGuid = Guid.Parse(workerId);
+
+        var requests = await _requestService.GetAllByWorkerIdAsync(workerGuid);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerGuid, 0);
+        var workerInfo = await _workerInfoService.GetAllAsync(workerGuid);
         var groupedPermissions = permissions.GroupBy(p => p.RequestId);
 
 
