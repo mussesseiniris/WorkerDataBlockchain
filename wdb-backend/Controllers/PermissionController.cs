@@ -19,7 +19,7 @@ public class PermissionController:ControllerBase
         _permissionService = permissionService;
     }
 
-    [HttpGet("{permissionid}/approve")]
+    [HttpPatch("{permissionid}/approve")]
     public async Task<ActionResult<Permission>> ApprovePermission (Guid permissionId, CancellationToken cancellationToken)
     {
         try
@@ -36,7 +36,7 @@ public class PermissionController:ControllerBase
         
     } 
 
-    [HttpGet("{permissionid}/reject")]
+    [HttpPatch("{permissionid}/reject")]
     public async Task<ActionResult<Permission>> RejectPermission (Guid permissionId, CancellationToken cancellationToken)
     {
         try

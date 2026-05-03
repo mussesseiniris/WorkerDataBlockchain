@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FetchApi } from '../../lib/api';
 
 export interface Field {
     id: string;
@@ -18,12 +19,32 @@ export interface Row {
 
 export default function RequestRow({ id, company, date, fields, reason}: Row){
     const [checkedFields, setCheckedFields] = useState<Field[]>(fields);
+    const [errorMsg, setErrorMsg] = useState('');
+    
 
     const toggleField = (label: string) => {
         setCheckedFields((prev) =>
         prev.map((f) => f.label === label ? {...f, checked: !f.checked}: f)
         );
     };
+
+    async function changePermission(status: "approve"|"reject") {
+        const checkedIds = checkedFields.filter((f) => f.checked).map((f)=> f.id);
+        
+        try {
+            await Promise.all(
+                checkedIds.map((permissionId) =>
+                FetchApi(`/api/Permission/${permissionId}/${status}`,{
+                    method: "PATCH"
+                })
+            )
+
+            );
+            } catch (error) {
+                setErrorMsg(`${error}`)
+            }
+    }
+
 
     return (
         <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -42,6 +63,7 @@ export default function RequestRow({ id, company, date, fields, reason}: Row){
                         checked={field.checked}
                         onChange={() => toggleField(field.label)}
                         className="cursor-pointer"
+                        
                         />
                         {field.label}
                     </label>
@@ -51,8 +73,12 @@ export default function RequestRow({ id, company, date, fields, reason}: Row){
         </div>
 
         <div className="flex gap-2">
-            <button className="bg-green-500 hover:bg-green-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors">✔</button>
-            <button className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors">✖</button>
+            <button className="bg-green-500 hover:bg-green-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors"
+            onClick={() => changePermission("approve")}
+            >✔</button>
+            <button className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-base cursor-pointer transition-colors"
+            onClick={() => changePermission("reject")}>✖</button>
+             {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
         </div>
 
         </div>
