@@ -3,69 +3,79 @@ using Moq;
 using wdb_backend.Abstractions;
 using wdb_backend.Controllers;
 using wdb_backend.Models;
+using Microsoft.AspNetCore.Http; // 必须添加，用于 Mock User
+using System.Security.Claims;
 
 public class WorkerInfoControllerTests
 {
-    private readonly Mock<IWorkerInfoRepository> _mockRepo;
+    // 1. mock interfaces that the controller depends on, and create an instance of the controller with those mocks
+    private readonly Mock<IWorkerInfoService> _mockService;
     private readonly WorkerInfoController _controller;
 
     public WorkerInfoControllerTests()
     {
-        _mockRepo = new Mock<IWorkerInfoRepository>();
-        _controller = new WorkerInfoController(_mockRepo.Object);
+        _mockService = new Mock<IWorkerInfoService>();
+        _controller = new WorkerInfoController(_mockService.Object);
+
+        // 2. mock the User property of the controller to simulate an authenticated user with a workerId claim
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+        }, "mock"));
+
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext() { User = user }
+        };
     }
 
     [Fact]
-    public async Task GetAllWorkerInfo_ReturnsOkResult_WithWorkerInfo()
+    public async Task GetAll_ReturnsOkResult_WithWorkerInfo()
     {
         // Arrange
-        var workerId = Guid.NewGuid();
         var workerInfoSet = new HashSet<WorkerInfo>
-            {
-                new WorkerInfo { Id = Guid.NewGuid(), Desc = "Test Desc", Value = "Test Value" }
-            };
-        _mockRepo.Setup(repo => repo.GetAllAsync(workerId)).ReturnsAsync(workerInfoSet);
+        {
+            new WorkerInfo { Id = Guid.NewGuid(), Desc = "Test Desc", Value = "Test Value" }
+        };
+        // 3. setup the mock service to return a predefined set of worker info when GetAllAsync is called
+        _mockService.Setup(s => s.GetAllAsync(It.IsAny<Guid>())).ReturnsAsync(workerInfoSet);
 
-        // Act
-        var result = await _controller.GetAllWorkerInfo(workerId);
+        // Act - call the GetAll method of the controller
+        var result = await _controller.GetAll();
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result); // 注意：Controller 返回的是 IActionResult
         var returnValue = Assert.IsType<HashSet<WorkerInfo>>(okResult.Value);
         Assert.Single(returnValue);
     }
 
     [Fact]
-    public async Task AddWorkerInfo_ReturnsOkResult()
+    public async Task Create_ReturnsOkResult()
     {
         // Arrange
-        var workerId = Guid.NewGuid();
         var workerInfo = new WorkerInfo { Id = Guid.NewGuid(), Desc = "Test Desc", Value = "Test Value" };
+        _mockService.Setup(s => s.CreateAsync(It.IsAny<Guid>(), It.IsAny<WorkerInfo>())).ReturnsAsync(workerInfo);
 
-        // Act
-        var result = await _controller.AddWorkerInfo(workerId, workerInfo);
+        // Act - call the Create method of the controller with a sample worker info
+        var result = await _controller.Create(workerInfo);
 
         // Assert
-        Assert.IsType<OkResult>(result);
-        _mockRepo.Verify(repo => repo.AddOneAsync(workerId, workerInfo), Times.Once);
+        Assert.IsType<OkObjectResult>(result);
+        _mockService.Verify(s => s.CreateAsync(It.IsAny<Guid>(), It.IsAny<WorkerInfo>()), Times.Once);
     }
 
-
     [Fact]
-    public async Task UpdateWorkerInfo_ReturnsOkResult_WithUpdatedInfo()
+    public async Task Update_ReturnsOkResult_WithUpdatedInfo()
     {
-        // Arragnge
-        var workerId = Guid.NewGuid();
+        // Arrange
         var workerInfo = new WorkerInfo { Id = Guid.NewGuid(), Desc = "Test", Value = "Test Value" };
+        _mockService.Setup(s => s.UpdateAsync(It.IsAny<Guid>(), It.IsAny<WorkerInfo>())).ReturnsAsync(workerInfo);
 
-
-        _mockRepo.Setup(repo => repo.UpdateAsync(workerId, workerInfo)).ReturnsAsync(workerInfo);
-
-        // Act
-        var result = await _controller.UpdateWorkerInfo(workerId, workerInfo);
+        // Act - call the Update method of the controller with a sample worker info
+        var result = await _controller.Update(workerInfo);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
         var returnValue = Assert.IsType<WorkerInfo>(okResult.Value);
         Assert.Equal(workerInfo.Id, returnValue.Id);
     }
