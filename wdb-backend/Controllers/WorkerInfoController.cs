@@ -32,16 +32,10 @@ namespace wdb_backend.Controllers
 
             if (claim == null)
             {
-                // log for debugging
-                Console.WriteLine("❌ User ID claim not found. Available claims:");
-                foreach (var c in User.Claims)
-                {
-                    Console.WriteLine($"  {c.Type}: {c.Value}");
-                }
+
                 throw new UnauthorizedAccessException("User ID not found in token");
             }
 
-            Console.WriteLine($"✅ Found claim: {claim.Type} = {claim.Value}");
             return Guid.Parse(claim.Value);
         }
 
@@ -66,7 +60,6 @@ namespace wdb_backend.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ GetAll failed: {ex.Message}");
                 return StatusCode(500, new { message = ex.Message });
             }
         }
@@ -93,7 +86,6 @@ namespace wdb_backend.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Create failed: {ex.Message}");
                 return StatusCode(500, new { message = ex.Message });
             }
         }
@@ -111,12 +103,6 @@ namespace wdb_backend.Controllers
             try
             {
                 var workerId = GetCurrentWorkerId();
-
-                // log for debugging
-                Console.WriteLine($"=== Update WorkerInfo ===");
-                Console.WriteLine($"WorkerId: {workerId}");
-                Console.WriteLine($"Desc: {info.Desc}");
-                Console.WriteLine($"Value: {info.Value}");
 
                 var updated = await _workerInfoService.UpdateAsync(workerId, info);
                 return Ok(updated);
