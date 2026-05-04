@@ -46,7 +46,7 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
     /// <returns></returns>
     public Task<HashSet<WorkerInfo>> GetAllAsyncHash(Guid workerId, CancellationToken cancellationToken = default)
     {
-        return _workerInfoRepo.GetAllAsync(workerId, cancellationToken);
+        return _workerInfoRepo.GetAllAsyncHash(workerId, cancellationToken);
     }
 
     /// <summary>
