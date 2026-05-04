@@ -19,10 +19,10 @@ public class WorkerInfoServiceTests
         List<WorkerInfo> workerInfos = new List<WorkerInfo>();
         workerInfos.Add(fakeWorkerInfo1);
         workerInfos.Add(fakeWorkerInfo2);
-        mockRepo.Setup(r => r.GetAllAsync(workerId, default)).ReturnsAsync(workerInfos);
+        mockRepo.Setup(r => r.GetAllAsyncList(workerId, default)).ReturnsAsync(workerInfos);
 
         // Act - call method 
-        var result = await service.GetAllAsync(workerId, default);
+        var result = await service.GetAllAsyncList(workerId, default);
 
         // Assert - check the result
         Assert.Equal(workerInfos, result);
@@ -37,7 +37,7 @@ public class WorkerInfoServiceTests
         var workerId = Guid.NewGuid();
 
         // Act &Assert - call method and check the result
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAllAsync(workerId));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAllAsyncList(workerId));
     }
 
 }
