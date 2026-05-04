@@ -38,13 +38,12 @@ public class WorkerServiceTests
         };
 
         //requests
-        var fakeRequests = new List<Request>{
-            new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"},
-            new Request{Id = Guid.NewGuid(), EmployerId = employerId, Reason ="Reason 2"},
-        };
+        var fakeRequests = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
+            
+    
         
         mockPermissionRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakePermissions);
-        mockRequestRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakeRequests);
+        mockRequestRepo.Setup(r => r.GetByRequestIdAsync(requestId, default)).ReturnsAsync(fakeRequests);
 
         // Act: 
         //Get permission based on workerid and filter to pending status
