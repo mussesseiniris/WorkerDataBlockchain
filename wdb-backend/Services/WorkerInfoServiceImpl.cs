@@ -44,10 +44,10 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
     /// <param name="workerId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    // public Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
-    // {
-    //     return _workerInfoRepo.GetAllAsync(workerId, cancellationToken);
-    // }
+    public Task<HashSet<WorkerInfo>> GetAllAsyncHash(Guid workerId, CancellationToken cancellationToken = default)
+    {
+        return _workerInfoRepo.GetAllAsync(workerId, cancellationToken);
+    }
 
     /// <summary>
     /// This method is to create a new worker info record in the database for a specific worker.

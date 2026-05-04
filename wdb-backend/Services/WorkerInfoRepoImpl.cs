@@ -33,14 +33,14 @@ public class WorkerInfoRepoImpl : IWorkerInfoRepository
     // This method receive a workerid and return all the worker info related to paramenter workerid.
     // the parameter workerid is the key in the database, cacellation token is to cancale the request if user pasue the request.
     // the return type is a hashset.
-    // public async Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
-    // {
-    //     var workerInfos = await _context.WorkerInfos
-    //        .Where(w => w.WorkerId == workerId)
-    //        .ToListAsync<WorkerInfo>(cancellationToken);// use .tolistasync to transform data from database to list of workerinfo that match c# grammar.
+    public async Task<HashSet<WorkerInfo>> GetAllAsyncHash(Guid workerId, CancellationToken cancellationToken = default)
+    {
+        var workerInfos = await _context.WorkerInfos
+           .Where(w => w.WorkerId == workerId)
+           .ToListAsync<WorkerInfo>(cancellationToken);// use .tolistasync to transform data from database to list of workerinfo that match c# grammar.
 
-    //     return workerInfos.ToHashSet(); // transform list to hashset.
-    // }
+        return workerInfos.ToHashSet(); // transform list to hashset.
+    }
 
 
 
