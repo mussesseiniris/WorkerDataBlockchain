@@ -17,7 +17,7 @@ import {
 
 const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/worker/dashboard' },// Manage user data sharing and view access activity
-    { label: 'Data Access', icon: KeyRound, href: '/worker/request-access' }, //Review employer requests, approve data sharing, and revoke active permissions
+    { label: 'Data Access', icon: KeyRound, href: '/worker/dataAccess' }, //Review employer requests, approve data sharing, and revoke active permissions
     { label: 'Audit Log', icon: ArrowLeftRight, href: '/worker/audit-log' }, //Track permission changes, access events, and blockchain records
     { label: 'Personal Data', icon: User, href: '/worker/profile' }, // Allow users to input their info
 ]
