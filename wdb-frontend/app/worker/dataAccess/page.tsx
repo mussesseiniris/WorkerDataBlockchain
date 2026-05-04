@@ -18,13 +18,13 @@ export default function Page() {
     const [rows, setRows] = useState<Row[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-    const token = localStorage.getItem('accessToken');
 
     useEffect(() => {
-        getRows();
+        const token = localStorage.getItem('accessToken');
+        getRows(token);
     }, []);
    
-    async function getRows() {
+    async function getRows(token: string|null) {
         setIsLoading(true);
         setErrorMsg('');
         try {
