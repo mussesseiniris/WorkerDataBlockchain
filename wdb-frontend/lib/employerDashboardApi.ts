@@ -1,7 +1,13 @@
+export type EmployerCompanyInfo = {
+  name: string;
+  email: string;
+  verified: boolean;
+};
+
 export type EmployerDashboardSummary = {
   pendingRequests: number;
-  activeApprovedAccess: number;
-  expiringSoon: number;
+  availableRequests: number;
+  partialRequests: number;
 };
 
 export type EmployerRecentRequest = {
@@ -9,11 +15,12 @@ export type EmployerRecentRequest = {
   workerName: string;
   requestedFields: string[];
   reason: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Expired' | 'Partial';
+  status: 'Pending' | 'Available' | 'Partial' | 'Unavailable';
   lastUpdatedAt: string;
 };
 
 export type EmployerDashboardData = {
+  company: EmployerCompanyInfo;
   summary: EmployerDashboardSummary;
   recentRequests: EmployerRecentRequest[];
 };
@@ -47,8 +54,8 @@ export async function getEmployerDashboardMe(
   if (!response.ok || !result.success) {
     throw new Error(
       result.error?.message ||
-      result.message ||
-      'Failed to load employer dashboard.'
+        result.message ||
+        'Failed to load employer dashboard.'
     );
   }
 
