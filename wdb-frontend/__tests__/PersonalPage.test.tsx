@@ -11,8 +11,8 @@ const mockData: WorkerInfoItem[] = [
     { workerId: "11111111-1111-1111-1111-111111111111", desc: "country", value: "New Zealand" },
     { workerId: "11111111-1111-1111-1111-111111111111", desc: "city", value: "Wellington" },
     { workerId: "11111111-1111-1111-1111-111111111111", desc: "street", value: "123 Main St" },
-    { workerId: "11111111-1111-1111-1111-111111111111", desc: "post code", value: "6011" },
-    { workerId: "11111111-1111-1111-1111-111111111111", desc: "genda", value: "male" },
+    { workerId: "11111111-1111-1111-1111-111111111111", desc: "postcode", value: "6011" },
+    { workerId: "11111111-1111-1111-1111-111111111111", desc: "gender", value: "male" },
 ];
 
 // prepare mock onSave function
@@ -79,8 +79,8 @@ describe("BasicProfileCard", () => {
             expect(mockOnSave).toHaveBeenCalledWith("country", "New Zealand");
             expect(mockOnSave).toHaveBeenCalledWith("city", "Wellington");
             expect(mockOnSave).toHaveBeenCalledWith("street", "123 Main St");
-            expect(mockOnSave).toHaveBeenCalledWith("post code", "6011");
-            expect(mockOnSave).toHaveBeenCalledWith("genda", "male");
+            expect(mockOnSave).toHaveBeenCalledWith("postcode", "6011");
+            expect(mockOnSave).toHaveBeenCalledWith("gender", "male");
         });
 
         // should return to display mode after saving
