@@ -3,7 +3,7 @@ using Moq;
 using wdb_backend.Abstractions;
 using wdb_backend.Controllers;
 using wdb_backend.Models;
-using Microsoft.AspNetCore.Http; // 必须添加，用于 Mock User
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
 public class WorkerInfoControllerTests
