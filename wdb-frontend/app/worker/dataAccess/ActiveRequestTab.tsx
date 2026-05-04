@@ -1,6 +1,6 @@
 "use client";
 
-import RequestRow, { Row, Field } from "../../components/RequestRow"
+import RequestRow, { Row } from "../../components/RequestRow"
 import { useState } from "react";
 
 interface RowList {
