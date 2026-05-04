@@ -130,15 +130,15 @@ public class WorkerController : ControllerBase
     [HttpGet("rows")]
     public async Task<ActionResult> GetRows()
     {
+
         var workerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (workerId == null) return Unauthorized();
         var workerGuid = Guid.Parse(workerId);
 
         var requests = await _requestService.GetAllByWorkerIdAsync(workerGuid);
-        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerGuid, 0);
         var workerInfo = await _workerInfoService.GetAllAsync(workerGuid);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerGuid, 0);
         var groupedPermissions = permissions.GroupBy(p => p.RequestId);
-
 
         var employers = await _employerService.GetDistinctEmployers();
         var employerMap = employers.ToDictionary(e => e.Id);

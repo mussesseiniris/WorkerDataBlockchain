@@ -3,7 +3,7 @@
 import { FetchApi } from '../../../lib/api';
 import { useState, ReactNode, useEffect } from 'react';
 import { Row } from "../../components/RequestRow"
-import RequestRowTab from './ActiveRequestTab';
+import ActiveRequestTab from './ActiveRequestTab';
 
 interface TabProps {
     id: string;
@@ -15,46 +15,13 @@ interface TabProps {
 export default function Page() { 
     
     const [activeTab, setActiveTab] = useState<string>("active-request");
-    const [rows, setRows] = useState<Row[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-
-    useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        getRows(token);
-    }, []);
-   
-    async function getRows(token: string|null) {
-        setIsLoading(true);
-        setErrorMsg('');
-        try {
-            var rows = await FetchApi(
-                `/api/Worker/rows`, {
-                headers: {
-                Authorization: `Bearer ${token}`,
-                },
-            });
-            if (!rows) {
-                alert ("There are no current requests");
-                return;
-            }
-            setRows(rows);
-        } catch (error) {
-            setErrorMsg(`${error}`)
-        } finally {
-            setIsLoading(false);
-        }
-   }
-
-   const tabs: TabProps[] = [
+    const tabs: TabProps[] = [
     {
         id: "active-request",
         label: "Active Request",
         children: 
         <div>
-            {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
-            {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
-            {!isLoading && <RequestRowTab requests={rows} />}
+           <ActiveRequestTab/>
         </div>
     },
     {

@@ -24,7 +24,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
     const [checkedFields, setCheckedFields] = useState<Field[]>(fields);
     const [errorMsg, setErrorMsg] = useState('');
     const [pendingAction, setPendingAction] = useState("");
-    
+    const [showModal, setShowModal] = useState(false);
 
     const toggleField = (label: string) => {
         setCheckedFields((prev) =>
@@ -32,7 +32,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
         );
     };
 
-    const [showModal, setShowModal] = useState(false);
+
 
     async function changePermission(status: "approve"|"reject") {
         const checkedIds = checkedFields.filter((f) => f.checked).map((f)=> f.id);
@@ -52,7 +52,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
 
 
     return (
-        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200 dark:border-gray-700">
 
         <div className="flex flex-col gap-2">
 
@@ -114,6 +114,6 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
              )}
         </div>
 
-        </div>
+    </div>
     )
 }
