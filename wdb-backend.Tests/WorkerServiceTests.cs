@@ -51,7 +51,7 @@ public class WorkerServiceTests
         var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
         
         //Get requets using request id from permission rows 
-        var requestResult = await requestService.GetByRequestIdAsync(workerId, requestId);
+        var requestResult = await requestService.GetByRequestIdAsync(requestId);
 
         
         // Assert: the returned data is a list of permissions/request
@@ -172,7 +172,7 @@ public class WorkerServiceTests
 
         //Act
         var resultPermission = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
-        var resultRequest = await requestService.GetByRequestIdAsync(workerId, requestId);
+        var resultRequest = await requestService.GetByRequestIdAsync(requestId);
 
         //Assert
         Assert.All(resultPermission, returnedPermission => Assert.True(returnedPermission.Status == 0));
