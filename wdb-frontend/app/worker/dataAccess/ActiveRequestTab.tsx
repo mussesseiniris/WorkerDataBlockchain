@@ -40,7 +40,7 @@ export default function ActiveRequestTab(){
     setRows((prev) => prev.filter((r) => r.id !== id));
     };
     
-    if (rows.length === 0) {
+    if (!isLoading && rows.length === 0) {
         return <p className="text-sm text-gray-500">No active permission requests</p>;
     }
 
