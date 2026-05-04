@@ -32,8 +32,6 @@ builder.Services.AddCors(options =>
 // registration and loing services
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
-
 // CORS for Next.js frontend
 builder.Services.AddCors(options =>
 {
@@ -59,12 +57,15 @@ builder.Services.AddControllers()
 builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 // Services
 builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
+builder.Services.AddScoped<IEmployerDashboardService, EmployerDashboardServiceImpl>();
 
 var app = builder.Build();
 app.UseCors("FrontendPolicy");
 
 app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapOpenApi();
 
