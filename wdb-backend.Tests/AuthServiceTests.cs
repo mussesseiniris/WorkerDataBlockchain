@@ -13,6 +13,7 @@ public class AuthServiceTests
     private readonly Mock<IPasswordHasher> _mockHasher;
     private readonly Mock<IJwtTokenService> _mockJwt;
     private readonly AuthService<Worker> _authService;
+    private readonly Mock<IBlockchainService> _mockBlockchain; // add for blockchain
 
     // initialize instances
     public AuthServiceTests()
@@ -20,7 +21,14 @@ public class AuthServiceTests
         _mockRepo = new Mock<IUserRepository<Worker>>();
         _mockHasher = new Mock<IPasswordHasher>();
         _mockJwt = new Mock<IJwtTokenService>();
-        _authService = new AuthService<Worker>(_mockRepo.Object, _mockHasher.Object, _mockJwt.Object);
+        _mockBlockchain = new Mock<IBlockchainService>();
+        _mockBlockchain.Setup(b => b.GenerateKeyPair()).Returns(new BlockchainKeyPair
+        {
+            PrivateKey = "fake_private_key",
+            BlockchainAddress = "fake_address"
+        });
+        _authService = new AuthService<Worker>(_mockRepo.Object, _mockHasher.Object, _mockJwt.Object, _mockBlockchain.Object);
+
     }
 
     // RegisterAsync Tests
@@ -198,5 +206,20 @@ public class AuthServiceTests
           Assert.False(success);
           Assert.Equal("Invalid email or password.", message);
           Assert.Null(result);
+      }
+
+      [Fact]
+      public async Task RegisterAsync_SetsBlockchainKeyPairOnUser()
+      {
+          _mockRepo.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+          _mockHasher.Setup(h => h.HashPassword(It.IsAny<string>())).Returns("hashed_password");
+
+          var request = new RegisterRequest("test@example.com", "TestUser", "Password123");
+
+          await _authService.RegisterAsync(request);
+
+          _mockRepo.Verify(r => r.AddAsync(
+              It.Is<Worker>(w => w.BlockchainAddress == "fake_address" && w.PrivateKey == "fake_private_key"),
+              It.IsAny<CancellationToken>()), Times.Once);
       }
 }

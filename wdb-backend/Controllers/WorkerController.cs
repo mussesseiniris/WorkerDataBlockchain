@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Data;
 using wdb_backend.Models;
+
 namespace wdb_backend.Controllers;
 
 /// <summary>
@@ -8,9 +9,10 @@ namespace wdb_backend.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class WorkerController:ControllerBase
+public class WorkerController : ControllerBase
 {
     private readonly AppDbContext _context;
+
     public WorkerController(AppDbContext context)
     {
         _context = context;

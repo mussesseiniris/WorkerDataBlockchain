@@ -20,7 +20,7 @@ public class FindWorkerInfosByEmailUsecaseImpl : IFindWorkerInfosByEmailUsecase
             return new List<WorkerInfo>();
         }
         else{
-        var workerinfos = await _workerInfoService.GetAllAsync(worker.Id, cancellationToken);
+        var workerinfos = await _workerInfoService.GetAllAsyncList(worker.Id, cancellationToken);
         return workerinfos;}
 
     }
