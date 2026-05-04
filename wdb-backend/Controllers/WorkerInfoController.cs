@@ -26,9 +26,9 @@ namespace wdb_backend.Controllers
         /// </summary>
         private Guid GetCurrentWorkerId()
         {
-            // ✅ 关键:JwtRegisteredClaimNames.Sub 对应 ClaimTypes.NameIdentifier
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier)  // ← 用这个!
-                     ?? User.FindFirst("sub");  // ← 备用
+
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)  // 
+                     ?? User.FindFirst("sub");  // use 'sub' as fallback for jwt tokens that instead use 'sub' to store user id
 
             if (claim == null)
             {
@@ -44,6 +44,12 @@ namespace wdb_backend.Controllers
             Console.WriteLine($"✅ Found claim: {claim.Type} = {claim.Value}");
             return Guid.Parse(claim.Value);
         }
+
+
+        /// <summary>
+        /// This method is to retrieve all worker info records associated with the current worker.
+        /// </summary>
+        /// <returns></returns>
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -65,6 +71,13 @@ namespace wdb_backend.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// This method is to create a new worker info record in the database for a specific worker.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] WorkerInfo info)
         {
@@ -85,6 +98,13 @@ namespace wdb_backend.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// This method is to update an existing worker info record in the database for a specific worker.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] WorkerInfo info)
         {
