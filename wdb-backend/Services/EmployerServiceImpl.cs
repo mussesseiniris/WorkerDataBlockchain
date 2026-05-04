@@ -3,8 +3,15 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class EmployerServiceImpl:IEmployerService
+public class EmployerServiceImpl : IEmployerService
 {
+    private readonly IEmployerRepository _employerRepository;
+
+    public EmployerServiceImpl(IEmployerRepository employerRepository)
+    {
+        _employerRepository = employerRepository;
+    }
+
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -28,5 +35,15 @@ public class EmployerServiceImpl:IEmployerService
     public Task<Employer> DeleteAsync(string email, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<Employer?> GetEmployerInfoAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _employerRepository.GetByIdAsync(id, cancellationToken);
+    }
+
+    public async Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default)
+    {
+        return await _employerRepository.GetDistinctEmployers(cancellationToken);
     }
 }

@@ -10,8 +10,9 @@ public interface IWorkerInfoRepository
     Task<WorkerInfo> GetOneAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default);
 
     // get all worker info of specific worker
-    Task<List<WorkerInfo>> GetAllAsyncList(Guid workerId, CancellationToken cancellationToken = default);
-    Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default);
+    Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default);
+
+    Task<HashSet<WorkerInfo>> GetAllAsyncHash(Guid workerId, CancellationToken cancellationToken = default);
 
     // add worker info by worker id
     Task AddOneAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default);

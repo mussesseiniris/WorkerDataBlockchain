@@ -22,7 +22,7 @@ public class FindWorkerInfosByEmailUsecaseTests
         workerInfos.Add(worker_info1);
         workerInfos.Add(worker_info2);
         mockWorkerService.Setup(r => r.GetByEmailAsync(fakeWorker.Email)).ReturnsAsync(fakeWorker);
-        mockWorkerInfoService.Setup(r => r.GetAllAsyncList(fakeWorker.Id)).ReturnsAsync(workerInfos);
+        mockWorkerInfoService.Setup(r => r.GetAllAsync(fakeWorker.Id)).ReturnsAsync(workerInfos);
         // Act
         var resultWorkerInfos = await findUsecase.FindWorkerInfosByEmail(fakeWorker.Email, default);
         // Assert

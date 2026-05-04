@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
@@ -7,17 +8,18 @@ namespace wdb_backend.Services;
 
 public class RequestRepoImpl : IRequestRepository
 {
+    private readonly AppDbContext _dbContext;
 
-    private readonly AppDbContext _context;
-    public RequestRepoImpl(AppDbContext context)
+    public RequestRepoImpl (AppDbContext dbContext)
     {
-        _context = context;
+        _dbContext = dbContext;
     }
+ 
     public async Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
     {
         var request = new Request { EmployerId = employerId, WorkerId = workerId, Reason = reason };
-        _context.Requests.Add(request);
-        await _context.SaveChangesAsync(cancellationToken);
+        _dbContext.Requests.Add(request);
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return request;
     }
 
@@ -27,8 +29,18 @@ public class RequestRepoImpl : IRequestRepository
         throw new NotImplementedException();
     }
 
-    public Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await _dbContext.Requests.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken);
+        return result;
     }
+
+    public async Task<Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.Requests.FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken)?? throw new KeyNotFoundException();
+        return result;
+    }
+
+
+
 }

@@ -51,15 +51,15 @@ export async function register(
   return res.json();
 }
 
-  export async function login(
-    role: UserRole,
-    email: string,
-    password: string
-  ): Promise<ApiResponse<AuthResult>> {
-    const res = await fetch(`${BASE_URL}/api/${role}s/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    return res.json();
-  }
+export async function login(
+  role: UserRole,
+  email: string,
+  password: string
+): Promise<ApiResponse<AuthResult>> {
+  const res = await fetch(`${BASE_URL}/api/${role}s/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
+}

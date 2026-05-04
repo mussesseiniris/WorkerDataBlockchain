@@ -38,7 +38,7 @@ public class WorkerInfoControllerTests
             new WorkerInfo { Id = Guid.NewGuid(), Desc = "Test Desc", Value = "Test Value" }
         };
         // 3. setup the mock service to return a predefined set of worker info when GetAllAsync is called
-        _mockService.Setup(s => s.GetAllAsync(It.IsAny<Guid>())).ReturnsAsync(workerInfoSet);
+        _mockService.Setup(s => s.GetAllAsyncHash(It.IsAny<Guid>())).ReturnsAsync(workerInfoSet);
 
         // Act - call the GetAll method of the controller
         var result = await _controller.GetAll();

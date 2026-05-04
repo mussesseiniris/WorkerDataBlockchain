@@ -31,10 +31,11 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
         return _workerInfoRepo.GetOneAsync(workerId, workerInfoId, cancellationToken);
     }
 
-    public async Task<List<WorkerInfo>> GetAllAsyncList(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        var resultInfos = await _workerInfoRepo.GetAllAsyncList(workerId,default)??throw new KeyNotFoundException();
-        return resultInfos;}
+        var resultInfos = await _workerInfoRepo.GetAllAsync(workerId,default)??throw new KeyNotFoundException();
+        return resultInfos;
+    }
 
     /// <summary>
     /// This method retrieves all worker information records associated with a specific worker from the database.
@@ -43,9 +44,9 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
     /// <param name="workerId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public Task<HashSet<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public Task<HashSet<WorkerInfo>> GetAllAsyncHash(Guid workerId, CancellationToken cancellationToken = default)
     {
-        return _workerInfoRepo.GetAllAsync(workerId, cancellationToken);
+        return _workerInfoRepo.GetAllAsyncHash(workerId, cancellationToken);
     }
 
     /// <summary>
@@ -92,4 +93,8 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
         throw new NotImplementedException();
     }
 
+    public Task<List<WorkerInfo>> GetAllAsyncList(Guid workerId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
