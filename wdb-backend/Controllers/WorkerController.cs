@@ -83,62 +83,19 @@ public class RequestRowResponse
     public required string Reason { get; set; }
     }
 
-    // [HttpGet("{workerId}/rows")]
-    // public async Task<ActionResult> GetRows(Guid workerId)
-    // {
-    //     var requests = await _requestService.GetAllByWorkerIdAsync(workerId);
-    //     var permissions = await _permissionService.GetAllByWorkerIdAsync(workerId, 0);
-    //     var workerInfo = await _workerInfoService.GetAllAsync(workerId);
-       
-    //     var employers = await _employerService.GetDistinctEmployers();
-    //     var employerMap = employers.ToDictionary(e => e.Id);
-
-    //     var rows = new List<RequestRowResponse>();
-
-    //     foreach (var req in requests)
-    //     {
-    //        var reqPermissions = permissions.Where(p => p.RequestId == req.Id).ToList();
-
-    //        var workerInfos = new List<FieldResponse>();
-    //        foreach (var p in reqPermissions)
-    //        {
-    //            var info = workerInfo.FirstOrDefault(w => w.Id == p.InfoId);
-    //            workerInfos.Add(new FieldResponse
-    //            {
-    //                Id = p.Id.ToString(),
-    //                Label = info?.Desc ?? "Unknown",
-    //                Checked = false
-    //            });
-    //        }
-
-    //         employerMap.TryGetValue(req.EmployerId, out var employer);
-    //         rows.Add(new RequestRowResponse
-    //         {
-    //             Id = req.Id.ToString(),
-    //             Company = employer?.Name.ToString() ?? "Unknown",
-    //             Date = req.CreatedAt.ToString("dd.MM.yyyy hh:mm tt"),
-    //             Fields = workerInfos,
-    //             Reason = req.Reason
-    //         });
-    //     };
-
-    //     return Ok(rows);
-        
-    // }
-
     [Authorize]
     [HttpGet("rows")]
     public async Task<ActionResult> GetRows()
     {   
+        
         var workerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (workerId == null) return Unauthorized();
         var workerGuid = Guid.Parse(workerId);
 
         var requests = await _requestService.GetAllByWorkerIdAsync(workerGuid);
-        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerGuid, 0);
         var workerInfo = await _workerInfoService.GetAllAsync(workerGuid);
+        var permissions = await _permissionService.GetAllByWorkerIdAsync(workerGuid, 0);
         var groupedPermissions = permissions.GroupBy(p => p.RequestId);
-
        
         var employers = await _employerService.GetDistinctEmployers();
         var employerMap = employers.ToDictionary(e => e.Id);
