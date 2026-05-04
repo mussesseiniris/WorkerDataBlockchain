@@ -4,6 +4,12 @@ using System.Text.Json.Serialization;
 using wdb_backend.Data;
 using wdb_backend.Abstractions;
 using wdb_backend.Services;
+using System.Reflection;
+using System.Text.Json.Serialization;
+using wdb_backend.Abstractions;
+using wdb_backend.Services;
+using wdb_backend.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +55,18 @@ builder.Services.AddDbContextPool<AppDbContext>(opt =>
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
+builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
+builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
+builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
+builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
+builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
+builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
+// Services
+builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
 
 var app = builder.Build();
 

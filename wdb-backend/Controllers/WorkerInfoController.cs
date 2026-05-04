@@ -51,7 +51,7 @@ namespace wdb_backend.Controllers
             try
             {
                 var workerId = GetCurrentWorkerId();
-                var infos = await _workerInfoService.GetAllAsync(workerId);
+                var infos = await _workerInfoService.GetAllAsyncHash(workerId);
                 return Ok(infos);
             }
             catch (UnauthorizedAccessException ex)
