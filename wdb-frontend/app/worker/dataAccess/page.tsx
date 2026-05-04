@@ -2,7 +2,7 @@
 // Worker requests: view, approve, or reject employer data access requests
 import { FetchApi } from '../../../lib/api';
 import { useState, ReactNode, useEffect } from 'react';
-import RequestRow, { Row, Field } from "../../components/RequestRow"
+import { Row } from "../../components/RequestRow"
 import RequestRowTab from './ActiveRequestTab';
 
 interface TabProps {
@@ -71,7 +71,6 @@ export default function Page() {
 
     const activeContent = tabs.find((t) => t.id === activeTab)?.children;
 
-
     return (
         <main className="p-8">
             <div>
@@ -85,14 +84,14 @@ export default function Page() {
                     className={`
                         px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer 
                         ${activeTab === id ?  "border-gray-900 text-gray-900 dark:border-white dark:text-white": 
-                        "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
+                        "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`
+                    }
                 >
                     {label}
                 </button>
                 )}
             </div>
-            <div 
-            className="mt-6">
+            <div className="mt-6">
                 {activeContent}
             </div>
         </main>

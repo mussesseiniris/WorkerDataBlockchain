@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using wdb_backend.Abstractions;
-using wdb_backend.Data;
 using wdb_backend.Models;
-using wdb_backend.Services;
 namespace wdb_backend.Controllers;
 
 /// <summary>
