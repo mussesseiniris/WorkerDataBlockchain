@@ -149,62 +149,74 @@ export default function Page() {
               </div>
             )}
             {/* Step 2: Select info items and submit request */}
+
             {findWorker && (
-              <div className="w-full">
-                <div className="w-full flex flex-col ">
-                  <div className="text-gray-600 bg-gray-100 w-full rounded-lg my-4 p-4">
-                    <p>Email: {worker?.email}</p>
-                    <p>Name: {worker?.name}</p>
-                  </div>
-                  <p className="text-gray-600">
-                    Please choose the info you want to request
-                  </p>
+              <div className="w-full flex flex-col ">
+                <div className="text-gray-600 bg-gray-100 w-full rounded-lg my-4 p-4">
+                  <p>Email: {worker?.email}</p>
+                  <p>Name: {worker?.name}</p>
+                </div>
 
-                  <div className="flex flex-col gap-2 ">
-                    {workerInfos.map((w) => (
-                      <div
-                        key={w.id}
-                        className="flex items-center justify-center border rounded-lg border-gray-300 w-full"
-                      >
+                {workerInfos.length === 0 ? (
+                  <>
+                    <p className='mb-4'>This worker has no info items</p>
+                    <button className='px-6 py-2 rounded-lg bg-[#49454F] text-white w-full' onClick={() => setFindWorker(false)}>Back</button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-600">
+                      Please choose the info you want to request
+                    </p>
+                    <div className="flex flex-col gap-2 ">
+                      {workerInfos.map((w) => (
+                        <div
+                          key={w.id}
+                          className="flex items-center justify-center border rounded-lg border-gray-300 w-full"
+                        >
+                          <input
+                            type="checkbox"
+                            className="border rounded-lg gap-2 m-2 accent-[#49454F]"
+                            checked={isSelected.has(w.id)}
+                            onChange={() => toggle(w.id)}
+                          />
+                          <p className="flex-1"> {w.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Reason input and submit */}
+                    <div className="flex flex-col items-center gap-4 rounded-lg my-4 w-full">
+                      <div className="relative border border-gray-300 rounded-xl px-4 pt-5 pb-2 w-full">
+                        <label className="absolute top-2 left-4 text-xs text-gray-400 ">
+                          Reason
+                        </label>
                         <input
-                          type="checkbox"
-                          className="border rounded-lg gap-2 m-2 accent-[#49454F]"
-                          checked={isSelected.has(w.id)}
-                          onChange={() => toggle(w.id)}
+                          type="text"
+                          className="w-full outline-none text-gray-800"
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
                         />
-                        <p className="flex-1"> {w.desc}</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Reason input and submit */}
-                <div className="flex flex-col items-center gap-4 rounded-lg my-4 w-full">
-                  <div className="relative border border-gray-300 rounded-xl px-4 pt-5 pb-2 w-full">
-                    <label className="absolute top-2 left-4 text-xs text-gray-400 ">
-                      Reason
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full outline-none text-gray-800"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                    />
-                  </div>
-                  {/* Click the button to submit a request */}
-                  <button
-                    onClick={() => handleRequest()}
-                    className="px-6 py-2 rounded-lg bg-[#49454F] text-white w-full"
-                  >
-                    Submit
-                  </button>
-                  <p className="flex items-center">{sentMsg}</p>
-                </div>
+                      {/* Click the button to submit a request */}
+                      <button
+                        onClick={() => handleRequest()}
+                        className="px-6 py-2 rounded-lg bg-[#49454F] text-white w-full"
+                      >
+                        Submit
+                      </button>
+                      <p className="flex items-center">{sentMsg}</p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
         </div>
       )}
+      {/* find worker */}
     </>
   );
+  {
+    /* return总 */
+  }
 }
