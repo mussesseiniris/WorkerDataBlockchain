@@ -42,8 +42,8 @@ export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps
         setEditCountry(data.find(item => item.desc == 'country')?.value ?? '')
         setEditCity(data.find(item => item.desc == 'city')?.value ?? '')
         setEditStreet(data.find(item => item.desc == 'street')?.value ?? '')
-        setEditPostcode(data.find(item => item.desc == 'post code')?.value ?? '')
-        setEditGendar(data.find(item => item.desc == 'genda')?.value ?? '')
+        setEditPostcode(data.find(item => item.desc == 'postcode')?.value ?? '')
+        setEditGendar(data.find(item => item.desc == 'gender')?.value ?? '')
     }, [data])
     //  save final value
     const handleDone = async () => {
@@ -55,8 +55,8 @@ export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps
         await onSave('country', editCountry)
         await onSave('city', editCity)
         await onSave('street', editStreet)
-        await onSave('post code', editPostcode)
-        await onSave('genda', editGendar)
+        await onSave('postcode', editPostcode)
+        await onSave('gender', editGendar)
 
         setIsEdit(false)
     }
@@ -95,10 +95,10 @@ export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps
                         <TextInput label={"Country"} value={editCountry} onChange={(v) => setEditCountry(v)} />
                         <TextInput label={"City"} value={editCity} onChange={(v) => setEditCity(v)} />
                         <TextInput label={"Street"} value={editStreet} onChange={(v) => setEditStreet(v)} />
-                        <TextInput label={"Post Code"} value={editPostcode} onChange={(v) => setEditPostcode(v)} />
+                        <TextInput label={"PostCode"} value={editPostcode} onChange={(v) => setEditPostcode(v)} />
                     </div>
 
-                    <Dropdown label={"Gendar"} value={editGendar} onChange={(v) => setEditGendar(v)} options={genderOptions} />
+                    <Dropdown label={"Gender"} value={editGendar} onChange={(v) => setEditGendar(v)} options={genderOptions} />
                 </div>
             ) : (
 
@@ -114,7 +114,7 @@ export default function BasicProfileCard({ data, onSave }: BasicProfileCardProps
                     <DisplayField label="Country" value={editCountry} />
                     <DisplayField label="City" value={editCity} />
                     <DisplayField label="Street" value={editStreet} />
-                    <DisplayField label="Post Code" value={editPostcode} />
+                    <DisplayField label="PostCode" value={editPostcode} />
                     <DisplayField label="Gender" value={editGendar} />
                 </div>
 
