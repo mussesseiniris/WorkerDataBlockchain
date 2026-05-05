@@ -27,7 +27,7 @@ export default function LoginPage() {
       localStorage.setItem('userName', res.data.userName);
       localStorage.setItem('role', role);
       localStorage.setItem('userId', res.data.userId);
-      router.push(`/${role}`);
+      router.push(`/${role}/dashboard`);
     } catch {
       setError('Network error. Please try again.');
     } finally {

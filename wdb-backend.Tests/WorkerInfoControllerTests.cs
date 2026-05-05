@@ -44,7 +44,7 @@ public class WorkerInfoControllerTests
         var result = await _controller.GetAll();
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result); // 注意：Controller 返回的是 IActionResult
+        var okResult = Assert.IsType<OkObjectResult>(result); 
         var returnValue = Assert.IsType<HashSet<WorkerInfo>>(okResult.Value);
         Assert.Single(returnValue);
     }

@@ -88,4 +88,9 @@ public class WorkerInfoRepoImpl : IWorkerInfoRepository
         throw new NotImplementedException();
     }
 
+    public Task<List<WorkerInfo>> GetAllAsyncList(Guid workerId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 }

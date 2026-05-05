@@ -5,7 +5,7 @@ namespace wdb_backend.Abstractions;
 public interface IPermissionRepository
 {
     // add all permissions according to request
-    Task AddAllByRequestAsync(Request request, LinkedList<WorkerInfo> workerInfos, CancellationToken cancellationToken = default);
+    Task AddAllByRequestAsync(Request request, List<WorkerInfo> workerInfos, CancellationToken cancellationToken = default);
 
     // update status
     Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default);
@@ -19,5 +19,8 @@ public interface IPermissionRepository
     // get all permissions by worker id
     Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 
+
+    // add one permission according to request
+    Task AddOneByRequestAsync(Request request, WorkerInfo workerInfo, CancellationToken cancellationToken=default);
 
 }

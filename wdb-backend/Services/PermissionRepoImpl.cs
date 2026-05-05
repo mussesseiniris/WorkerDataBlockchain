@@ -6,7 +6,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class PermissionRepoImpl:IPermissionRepository
+public class PermissionRepoImpl : IPermissionRepository
 {
     private readonly AppDbContext _dbContext;
 
@@ -14,9 +14,15 @@ public class PermissionRepoImpl:IPermissionRepository
     {
         _dbContext = dbContext;
     }
-    public Task AddAllByRequestAsync(Request request, LinkedList<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
+  
+
+    public async Task AddAllByRequestAsync(Request request, List<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        foreach (var workerInfo in workerInfos)
+        {
+            await AddOneByRequestAsync(request, workerInfo, cancellationToken);
+        }
+
     }
 
     public async Task<Permission> UpdateAsync(Guid permissionId, Permission permission, CancellationToken cancellationToken = default)
@@ -44,4 +50,12 @@ public class PermissionRepoImpl:IPermissionRepository
         var result = await _dbContext.Permissions.Where(x => x.WorkerId == workerId).ToListAsync(cancellationToken)?? throw new KeyNotFoundException();
         return result;
     }
+
+    public async Task AddOneByRequestAsync(Request request, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
+    {
+        var permission = new Permission { InfoId = workerInfo.Id, RequestId = request.Id, WorkerId = workerInfo.WorkerId, Status = Common.PermissionStatus.Pending };
+        _dbContext.Permissions.Add(permission);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
 }

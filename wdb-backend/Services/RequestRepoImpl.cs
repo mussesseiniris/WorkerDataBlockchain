@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
@@ -13,10 +14,15 @@ public class RequestRepoImpl : IRequestRepository
     {
         _dbContext = dbContext;
     }
-    public Task AddAsync(Guid employerId, Guid workerId, Request request, CancellationToken cancellationToken = default)
+ 
+    public async Task<Request> AddAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var request = new Request { EmployerId = employerId, WorkerId = workerId, Reason = reason };
+        _dbContext.Requests.Add(request);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return request;
     }
+
 
     public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {

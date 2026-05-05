@@ -3,7 +3,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class RequestServiceImpl:IRequestService
+public class RequestServiceImpl : IRequestService
 {
     private readonly IRequestRepository _requestRepository;
 
@@ -12,10 +12,12 @@ public class RequestServiceImpl:IRequestService
         _requestRepository = requestRepository;
     }
 
-    public Task<Request> CreateAsync(Guid employerId, Guid workerId, Request request, CancellationToken cancellationToken = default)
+   public async Task<Request> CreateAsync(Guid employerId, Guid workerId, string reason, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var resultRequest = await _requestRepository.AddAsync(employerId, workerId, reason, default) ?? throw new KeyNotFoundException();
+        return resultRequest;
     }
+
 
     public Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default)
     {

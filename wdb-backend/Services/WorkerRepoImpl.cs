@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
-
 namespace wdb_backend.Services;
 
 public class WorkerRepoImpl : IWorkerRepository
@@ -19,9 +19,15 @@ public class WorkerRepoImpl : IWorkerRepository
         return await _context.Workers.AnyAsync(worker => worker.Email.Equals(email), cancellationToken);
     }
 
-    public async Task<Worker?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+      public async Task<Worker> GetByEmailAsync(string email, CancellationToken cancellationToken)
     {
-        return await _context.Workers.FirstOrDefaultAsync(worker => worker.Email.Equals(email), cancellationToken);
+        var resultWorker = await _context.Workers.FirstOrDefaultAsync(w => w.Email == email, cancellationToken);
+        if (resultWorker == null)
+        {
+            throw new KeyNotFoundException($"Worker with {email} email not found");
+        }
+
+        return resultWorker;
     }
 
     public async Task AddAsync(Worker worker, CancellationToken cancellationToken = default)

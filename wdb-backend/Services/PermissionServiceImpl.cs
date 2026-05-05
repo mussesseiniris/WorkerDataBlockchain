@@ -14,9 +14,10 @@ public class PermissionServiceImpl:IPermissionService
     {
         _permissionRepository = permissionRepository;
     }
-    public Task CreateAllByRequestAsync(Request request, IEnumerable<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
+ 
+    public async Task CreateAllByRequestAsync(Request request, List<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+         await _permissionRepository.AddAllByRequestAsync(request,workerInfos,cancellationToken);
     }
 
     /// <summary>
@@ -75,5 +76,10 @@ public class PermissionServiceImpl:IPermissionService
         }
        
        return result;
+    }
+
+    public Task CreateAllByRequestAsync(Request request, HashSet<WorkerInfo> workerInfos, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

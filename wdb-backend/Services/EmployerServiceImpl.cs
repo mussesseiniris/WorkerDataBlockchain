@@ -3,11 +3,11 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class EmployerServicerImpl : IEmployerService
+public class EmployerServiceImpl : IEmployerService
 {
     private readonly IEmployerRepository _employerRepository;
 
-    public EmployerServicerImpl(IEmployerRepository employerRepository)
+    public EmployerServiceImpl(IEmployerRepository employerRepository)
     {
         _employerRepository = employerRepository;
     }
