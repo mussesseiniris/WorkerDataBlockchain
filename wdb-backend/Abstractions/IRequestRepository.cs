@@ -12,8 +12,9 @@ public interface IRequestRepository
     Task<LinkedList<Request>> GetAllByEmployerIdAsync(Guid employerId, CancellationToken cancellationToken = default);
 
     // query all requests by worker id
-    Task<LinkedList<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
+    Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 
+    Task <Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
 
 
 }

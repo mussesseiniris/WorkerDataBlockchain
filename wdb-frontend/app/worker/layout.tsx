@@ -1,8 +1,14 @@
-// Worker layout: shared sidebar navigation for all worker pages
-export default function EmployerLayout({ children }: { children: React.ReactNode }) {
+import Sidebar from "@/components/sidebar/Sidebar"
+
+
+export default function WorkerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      {children}
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-6">
+        {children}
+      </main>
     </div>
-  );
+  )
 }
+
