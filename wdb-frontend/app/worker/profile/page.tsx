@@ -10,8 +10,6 @@ import { useRouter } from 'next/navigation'
 import router from 'next/dist/shared/lib/router/router'
 
 
-const workerId = '1234'
-const testName = 'John'
 
 // define a shared component that display the function/ux will finish in next stage.
 const PlaceholderCard = ({ title }: { title: string }) => (
@@ -55,7 +53,7 @@ export default function ProfilePage() {
             }
         }
         fetchData()
-    }, [])
+    }, [router])
 
     const handlesave = async (desc: string, value: string) => {
         try {
@@ -76,9 +74,8 @@ export default function ProfilePage() {
         <div className="flex flex-col h-screen bg-gray-50">
             <TopBar />
             <div className="flex-1 overflow-y-auto px-8 py-8 flex flex-col gap-6">
-                <UserInfoCard data={allData} workerId={workerId} userName={testName} />
-                <BasicProfileCard data={allData} onSave={async (handleSave) => {
-                }} />
+                <UserInfoCard data={allDate} workerId={workerId} userName={userName} />
+                <BasicProfileCard data={allDate} onSave={handlesave} />
                 <PlaceholderCard title="Health Considerations" />
                 <PlaceholderCard title="Emergency Contact" />
                 <PlaceholderCard title="Certifications" />
@@ -87,13 +84,5 @@ export default function ProfilePage() {
             </div>
         </div>
     )
-}
-
-function updateWorkerInfo(workerId: any, desc: string, value: string) {
-    throw new Error('Function not implemented.')
-}
-
-function getWorkerInfo(workerId: any) {
-    throw new Error('Function not implemented.')
 }
 

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
@@ -17,6 +16,7 @@ public class WorkerInfoRepoImpl : IWorkerInfoRepository
     {
         _context = context;
     }
+
     public Task<WorkerInfo> GetOneAsync(Guid workerId, Guid wordInfoId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -58,16 +58,26 @@ public class WorkerInfoRepoImpl : IWorkerInfoRepository
     // the return type is worker info.
     public async Task<WorkerInfo> UpdateAsync(Guid workerId, WorkerInfo workerInfo, CancellationToken cancellationToken = default)
     {
-        var exsitingWorkerInfo = _context.WorkerInfos.FirstOrDefault(w => w.Id == workerInfo.Id && w.WorkerId == workerId);// check if the worker info exist in db.
-        if (exsitingWorkerInfo == null)
-        {
-            throw new KeyNotFoundException($"WorkerInfo with id {workerInfo.Id} for worker {workerId} not fount.");
-        } // if not exit,throw a warning to user.
+        // check if the record exist in db by workerid and desc, if exist then update the value,if not exist then add a new record in db.
+        var existing = await _context.WorkerInfos
+            .FirstOrDefaultAsync(w => w.WorkerId == workerId && w.Desc == workerInfo.Desc, cancellationToken);
 
-        exsitingWorkerInfo.Desc = workerInfo.Desc; // if exit, let the user updated info to be saved.
-        exsitingWorkerInfo.Value = workerInfo.Value; //let user updated info to be saved.
-        await _context.SaveChangesAsync(cancellationToken);// implement the update in db and keep the updated info until request finised/cancelled.
-        return exsitingWorkerInfo;
+        if (existing != null)
+        {
+            // if the record exist, then updat the vaule and save the change in db.
+            existing.Value = workerInfo.Value;
+            await _context.SaveChangesAsync(cancellationToken);
+            return existing;
+        }
+        else
+        {
+            // if it is not exist, then add a new record
+            workerInfo.WorkerId = workerId;
+            workerInfo.Id = Guid.NewGuid();  // generate a new id for the new record
+            _context.WorkerInfos.Add(workerInfo);
+            await _context.SaveChangesAsync(cancellationToken);
+            return workerInfo;
+        }
     }
 
 
