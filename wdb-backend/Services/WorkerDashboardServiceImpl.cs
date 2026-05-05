@@ -7,13 +7,22 @@ namespace wdb_backend.Services;
 public class WorkerDashboardServiceImpl : IWorkerDashboardService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IBlockchainService _blockchainService;
+    private readonly ILogger<WorkerDashboardServiceImpl> _logger;
 
-    public WorkerDashboardServiceImpl(AppDbContext dbContext)
+    public WorkerDashboardServiceImpl(
+        AppDbContext dbContext,
+        IBlockchainService blockchainService,
+        ILogger<WorkerDashboardServiceImpl> logger)
     {
         _dbContext = dbContext;
+        _blockchainService = blockchainService;
+        _logger = logger;
     }
 
-    public async Task<object?> GetDashboardAsync(Guid workerId, CancellationToken cancellationToken = default)
+    public async Task<object?> GetDashboardAsync(
+        Guid workerId,
+        CancellationToken cancellationToken = default)
     {
         var worker = await _dbContext.Workers
             .AsNoTracking()
@@ -38,7 +47,46 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
                 createdAt = r.CreatedAt,
                 reason = r.Reason
             }
-        ).Take(5).ToListAsync(cancellationToken);
+        )
+        .Take(5)
+        .ToListAsync(cancellationToken);
+
+        var blockchainRecords = new List<object>();
+        var blockchainAvailable = true;
+
+        if (!string.IsNullOrWhiteSpace(worker.BlockchainAddress))
+        {
+            try
+            {
+                var logs = await _blockchainService.GetWorkerLogsAsync(
+                    worker.BlockchainAddress,
+                    cancellationToken
+                );
+
+                blockchainRecords = logs
+                    .Take(5)
+                    .Select(log => new
+                    {
+                        employerAddress = log.EmployerAddress,
+                        workerAddress = log.WorkerAddress,
+                        action = log.Action,
+                        txHash = log.TxHash,
+                        date = log.Date
+                    })
+                    .Cast<object>()
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                blockchainAvailable = false;
+
+                _logger.LogWarning(
+                    ex,
+                    "Failed to load blockchain records for worker {WorkerId}",
+                    workerId
+                );
+            }
+        }
 
         return new
         {
@@ -47,10 +95,12 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
                 id = worker.Id,
                 name = worker.Name,
                 email = worker.Email,
-                verified = worker.Verified
+                verified = worker.Verified,
+                blockchainAddress = worker.BlockchainAddress
             },
-            latestRequests = latestRequests,
-            blockchainRecords = new List<object>()
+            latestRequests,
+            blockchainRecords,
+            blockchainAvailable
         };
     }
 }
