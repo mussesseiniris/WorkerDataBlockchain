@@ -25,6 +25,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
     const [errorMsg, setErrorMsg] = useState('');
     const [pendingAction, setPendingAction] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [showExpiry, setShowExpiry] = useState(false);
 
     const toggleField = (label: string) => {
         setCheckedFields((prev) =>
@@ -84,13 +85,18 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
             disabled={checkedFields.filter(f => f.checked).length === 0}
             onClick={() => {
                 setShowModal(true);
-                setPendingAction("approve");}}
+                setPendingAction("approve");
+                setShowExpiry(true);
+            }}
             >✔</button>
             <button className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-base disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             disabled={checkedFields.filter(f => f.checked).length === 0}
             onClick={() =>  {
                 setShowModal(true);
-                setPendingAction("reject")}}
+                setPendingAction("reject")
+                setShowExpiry(false);
+            }}
+                
             >✖</button>
              {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
 
@@ -110,6 +116,7 @@ export default function RequestRow({ id, company, date, fields, reason, onComple
                         setShowModal(false);
                         setPendingAction("");
                     }}
+                    showExpiry={showExpiry}
                 />
              )}
         </div>
