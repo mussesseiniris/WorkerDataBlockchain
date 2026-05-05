@@ -15,6 +15,4 @@ public interface IRequestRepository
     Task<List<Request>> GetAllByWorkerIdAsync(Guid workerId, CancellationToken cancellationToken = default);
 
     Task<Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
-
-
 }
