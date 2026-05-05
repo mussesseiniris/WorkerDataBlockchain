@@ -16,6 +16,7 @@ public interface IRequestRepository
 
     Task<Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
 
+    Task <Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
 
 
 }

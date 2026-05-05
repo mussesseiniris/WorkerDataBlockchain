@@ -4,6 +4,7 @@ namespace wdb_backend.Abstractions;
 
 public interface IEmployerService
 {
+
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
     Task<Employer> GetByEmailAsync(string email, CancellationToken cancellationToken = default);

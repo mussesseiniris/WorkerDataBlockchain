@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository<Worker>>(sp => sp.GetRequiredService<IWorkerRepository>());
         services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
         services.AddScoped<IUserRepository<Employer>>(sp => sp.GetRequiredService<IEmployerRepository>());
+        services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 
         return services;
     }

@@ -1,5 +1,19 @@
 // API client: centralized functions for calling the ASP.NET Core backend
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5258';
+import { error } from 'console';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5258";
+
+export async function FetchApi(endpoint: string, options?: RequestInit) {
+  const result = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!result.ok) {
+    throw new Error(`Http error: ${result.status}`);
+  }
+  return result.json();
+
+}
 
 export type UserRole = 'worker' | 'employer';
 
@@ -41,16 +55,4 @@ export async function login(
     body: JSON.stringify({ email, password }),
   });
   return res.json();
-}
-
-export async function FetchApi(endpoint: string, options?: RequestInit) {
-  const result = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!result.ok) {
-    throw new Error(`Http error: ${result.status}`);
-  }
-  return result.json();
-
 }

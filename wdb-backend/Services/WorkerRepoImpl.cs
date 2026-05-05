@@ -5,7 +5,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class WorkerRepoImpl: IWorkerRepository
+public class WorkerRepoImpl : IWorkerRepository
 {
     private readonly AppDbContext _context;
 
