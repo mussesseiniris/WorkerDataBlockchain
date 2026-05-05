@@ -19,7 +19,7 @@ namespace wdb_backend.Services;
 //   uint8   action
 // )
 // ─────────────────────────────────────────────────────
-[Event("TransactionLog")]
+[Event("TransactionLogged")]
 public class TransactionLogEvent : IEventDTO
 {
     [Parameter("address", "employer", 1, true)]
@@ -102,7 +102,7 @@ public class BlockchainService : IBlockchainService
         {
             var account = new Account(privateKey);
             var web3 = new Web3(account, _rpcUrl);
-            var contract = web3.Eth.GetContract(_abi, _contractAddress);
+            var contract = web3.Eth.GetContract(GetAbi(), _contractAddress);
             var logFn = contract.GetFunction("logTransaction");
 
             var txHash = await logFn.SendTransactionAsync(

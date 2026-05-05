@@ -6,6 +6,7 @@ namespace wdb_backend.Controllers;
 /// <summary>
 /// API controller for worker dashboard operations.
 /// </summary>
+
 [ApiController]
 [Route("api/worker/dashboard")]
 public class WorkerDashboardController : ControllerBase

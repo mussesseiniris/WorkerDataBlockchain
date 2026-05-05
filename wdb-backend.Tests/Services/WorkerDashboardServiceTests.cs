@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using wdb_backend.Abstractions;
 using wdb_backend.Data;
 using wdb_backend.Models;
 using wdb_backend.Services;
@@ -17,11 +19,20 @@ public class WorkerDashboardServiceTests
         return new AppDbContext(options);
     }
 
+    private static WorkerDashboardServiceImpl CreateService(AppDbContext dbContext)
+    {
+        return new WorkerDashboardServiceImpl(
+            dbContext,
+            new FakeBlockchainService(),
+            NullLogger<WorkerDashboardServiceImpl>.Instance
+        );
+    }
+
     [Fact]
     public async Task GetDashboardAsync_ShouldReturnNull_WhenWorkerDoesNotExist()
     {
         using var dbContext = CreateDbContext(nameof(GetDashboardAsync_ShouldReturnNull_WhenWorkerDoesNotExist));
-        var service = new WorkerDashboardServiceImpl(dbContext);
+        var service = CreateService(dbContext);
 
         var workerId = Guid.NewGuid();
 
@@ -50,7 +61,7 @@ public class WorkerDashboardServiceTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new WorkerDashboardServiceImpl(dbContext);
+        var service = CreateService(dbContext);
 
         // Act
         var result = await service.GetDashboardAsync(workerId);
@@ -149,7 +160,7 @@ public class WorkerDashboardServiceTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new WorkerDashboardServiceImpl(dbContext);
+        var service = CreateService(dbContext);
 
         // Act
         var result = await service.GetDashboardAsync(workerId);
@@ -197,16 +208,11 @@ public class WorkerDashboardServiceTests
             CreatedAt = DateTime.UtcNow
         });
 
-        var requestIds = new List<Guid>();
-
         for (int i = 0; i < 6; i++)
         {
-            var requestId = Guid.NewGuid();
-            requestIds.Add(requestId);
-
             dbContext.Requests.Add(new Request
             {
-                Id = requestId,
+                Id = Guid.NewGuid(),
                 WorkerId = workerId,
                 EmployerId = employerId,
                 Reason = $"Reason {i}",
@@ -216,7 +222,7 @@ public class WorkerDashboardServiceTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new WorkerDashboardServiceImpl(dbContext);
+        var service = CreateService(dbContext);
 
         // Act
         var result = await service.GetDashboardAsync(workerId);
@@ -230,7 +236,7 @@ public class WorkerDashboardServiceTests
         var requestCount = json.Split("requestId").Length - 1;
         Assert.Equal(5, requestCount);
 
-        // The newest five should be kept, and the oldest one (Reason 5) should be excluded
+        // The newest five should be kept, and the oldest one should be excluded
         Assert.Contains("Reason 0", json);
         Assert.Contains("Reason 1", json);
         Assert.Contains("Reason 2", json);
@@ -238,7 +244,7 @@ public class WorkerDashboardServiceTests
         Assert.Contains("Reason 4", json);
         Assert.DoesNotContain("Reason 5", json);
 
-        // The requests should be ordered from newest to oldest: Reason 0 should appear before Reason 4
+        // The requests should be ordered from newest to oldest
         var index0 = json.IndexOf("Reason 0", StringComparison.Ordinal);
         var index4 = json.IndexOf("Reason 4", StringComparison.Ordinal);
 
@@ -260,12 +266,13 @@ public class WorkerDashboardServiceTests
             Email = "user@example.com",
             Password = "hashed-password",
             Verified = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            BlockchainAddress = "0xWorkerAddress"
         });
 
         await dbContext.SaveChangesAsync();
 
-        var service = new WorkerDashboardServiceImpl(dbContext);
+        var service = CreateService(dbContext);
 
         // Act
         var result = await service.GetDashboardAsync(workerId);
@@ -276,5 +283,38 @@ public class WorkerDashboardServiceTests
         var json = JsonSerializer.Serialize(result);
 
         Assert.Contains("\"blockchainRecords\":[]", json);
+        Assert.Contains("\"blockchainAvailable\":true", json);
+    }
+
+    private class FakeBlockchainService : IBlockchainService
+    {
+        public BlockchainKeyPair GenerateKeyPair()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> LogTransactionAsync(
+            string privateKey,
+            string employerAddress,
+            string workerAddress,
+            BlockchainAction action,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<BlockchainTransactionResponse>> GetWorkerLogsAsync(
+            string workerAddress,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new List<BlockchainTransactionResponse>());
+        }
+
+        public Task<List<BlockchainTransactionResponse>> GetEmployerLogsAsync(
+            string employerAddress,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
