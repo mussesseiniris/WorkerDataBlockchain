@@ -33,7 +33,7 @@ public class WorkerInfoServiceImpl : IWorkerInfoService
 
     public async Task<List<WorkerInfo>> GetAllAsync(Guid workerId, CancellationToken cancellationToken = default)
     {
-        var resultInfos = await _workerInfoRepo.GetAllAsync(workerId,default)??throw new KeyNotFoundException();
+        var resultInfos = await _workerInfoRepo.GetAllAsync(workerId, default) ?? throw new KeyNotFoundException();
         return resultInfos;
     }
 

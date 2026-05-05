@@ -7,7 +7,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class PermissionServiceImpl:IPermissionService
+public class PermissionServiceImpl : IPermissionService
 {
     private readonly IPermissionRepository _permissionRepository;
     public PermissionServiceImpl(IPermissionRepository permissionRepository)
@@ -32,11 +32,11 @@ public class PermissionServiceImpl:IPermissionService
     /// <exception cref="KeyNotFoundException"></exception>
     public async Task<Permission> UpdateAsync(Guid permissionId, int status, CancellationToken cancellationToken = default)
     {
-        var permission = await _permissionRepository.GetOneAsync(permissionId, cancellationToken)??throw new KeyNotFoundException();
+        var permission = await _permissionRepository.GetOneAsync(permissionId, cancellationToken) ?? throw new KeyNotFoundException();
         if (permission.Status != PermissionStatus.Pending)
         {
             throw new InvalidOperationException($"Permission {permissionId} cannot be udpated as it is no longer pending");
-        } 
+        }
 
         permission.Status = (PermissionStatus)status;
         permission.LastUpdatedAt = DateTime.UtcNow;
@@ -68,12 +68,12 @@ public class PermissionServiceImpl:IPermissionService
     /// <exception cref="KeyNotFoundException">Thrown when no permissions are found for given worker ID </exception>
     public async Task<List<Permission>> GetAllByWorkerIdAsync(Guid workerId, int Status = -1, CancellationToken cancellationToken = default)
     {
-       var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId, cancellationToken)??throw new KeyNotFoundException();
-       if (Status != -1)
+        var result = await _permissionRepository.GetAllByWorkerIdAsync(workerId, cancellationToken) ?? throw new KeyNotFoundException();
+        if (Status != -1)
         {
-           result = result.Where(x => x.Status == (PermissionStatus)Status).ToList();
+            result = result.Where(x => x.Status == (PermissionStatus)Status).ToList();
         }
-       
-       return result;
+
+        return result;
     }
 }

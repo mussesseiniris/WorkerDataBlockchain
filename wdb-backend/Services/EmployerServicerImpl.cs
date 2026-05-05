@@ -4,6 +4,7 @@ using wdb_backend.Models;
 namespace wdb_backend.Services;
 
 public class EmployerServicerImpl : IEmployerService
+
 {
     private readonly IEmployerRepository _employerRepository;
 
@@ -47,3 +48,4 @@ public class EmployerServicerImpl : IEmployerService
         return await _employerRepository.GetDistinctEmployers(cancellationToken);
     }
 }
+

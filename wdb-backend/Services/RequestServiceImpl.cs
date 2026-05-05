@@ -3,7 +3,7 @@ using wdb_backend.Models;
 
 namespace wdb_backend.Services;
 
-public class RequestServiceImpl:IRequestService
+public class RequestServiceImpl : IRequestService
 {
     private readonly IRequestRepository _requestRepository;
 
@@ -28,7 +28,7 @@ public class RequestServiceImpl:IRequestService
         return result;
     }
 
-    public async Task <Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
+    public async Task<Request> GetByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
     {
         var result = await _requestRepository.GetByRequestIdAsync(requestId, cancellationToken);
         return result;
