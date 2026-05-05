@@ -1,32 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using System.Reflection;
-using System.Text.Json.Serialization;
 using wdb_backend.Data;
 using wdb_backend.Abstractions;
 using wdb_backend.Services;
-using System.Reflection;
-using System.Text.Json.Serialization;
 using wdb_backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================
-// service 
-// ============================
-
-// ============================
-// service 
-// ============================
-
-// ============================
-// service 
-// ============================
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
+// OpenAPI / Swagger
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -36,8 +18,7 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-// CORS make sure to add before authentication and authorization middlewares, otherwise the preflight request will be blocked before reaching CORS middleware.
-// CORS make sure to add before authentication and authorization middlewares, otherwise the preflight request will be blocked before reaching CORS middleware.
+// CORS - must be added before authentication/authorization middleware
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -48,62 +29,31 @@ builder.Services.AddCors(options =>
     });
 });
 
-// infrastructure 
-// infrastructure 
+// Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
-
-// application services
-builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
-builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
-builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
-
 
 // DbContext
 builder.Services.AddDbContextPool<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Controllers(with JSON enum converter)
-// Controllers(with JSON enum converter)
+// Controllers (with JSON enum converter)
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
-builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
-builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
-builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
-builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
-builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
-builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
-builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
-builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
-builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
-builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
-builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
-builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
-builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
-builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
-builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
-builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 // Services
+builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 builder.Services.AddScoped<IWorkerDashboardService, WorkerDashboardServiceImpl>();
+builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
+builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 builder.Services.AddScoped<IPermissionService, PermissionServiceImpl>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepoImpl>();
 builder.Services.AddScoped<IRequestService, RequestServiceImpl>();
 builder.Services.AddScoped<IRequestRepository, RequestRepoImpl>();
-builder.Services.AddScoped<IWorkerInfoService, WorkerInfoServiceImpl>();
-builder.Services.AddScoped<IWorkerInfoRepository, WorkerInfoRepoImpl>();
 builder.Services.AddScoped<IEmployerService, EmployerServicerImpl>();
 builder.Services.AddScoped<IEmployerRepository, EmployerRepoImpl>();
 
 var app = builder.Build();
-//app.UseCors("FrontendPolicy");
-
-app.UseCors("AllowFrontend");
-
-app.MapControllers();
-app.MapOpenApi();
 
 if (app.Environment.IsDevelopment())
 {
@@ -111,14 +61,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("FrontendPolicy");   // CORS use once.
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapOpenApi();
-
-app.UseCors("FrontendPolicy");   // CORS use once.
+app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 

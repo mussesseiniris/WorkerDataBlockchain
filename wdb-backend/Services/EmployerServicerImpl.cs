@@ -4,15 +4,8 @@ using wdb_backend.Models;
 namespace wdb_backend.Services;
 
 public class EmployerServicerImpl : IEmployerService
-public class EmployerServicerImpl : IEmployerService
+
 {
-    private readonly IEmployerRepository _employerRepository;
-
-    public EmployerServicerImpl(IEmployerRepository employerRepository)
-    {
-        _employerRepository = employerRepository;
-    }
-
     private readonly IEmployerRepository _employerRepository;
 
     public EmployerServicerImpl(IEmployerRepository employerRepository)
@@ -56,8 +49,3 @@ public class EmployerServicerImpl : IEmployerService
     }
 }
 
-    public async Task<List<Employer>> GetDistinctEmployers(CancellationToken cancellationToken = default)
-    {
-        return await _employerRepository.GetDistinctEmployers(cancellationToken);
-    }
-}
