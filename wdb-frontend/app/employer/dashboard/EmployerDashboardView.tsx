@@ -1,4 +1,7 @@
+'use client';
 import type { EmployerDashboardData } from '@/lib/employerDashboardApi';
+import RequestModal from '../requests/RequestModel';
+import { useState } from 'react';
 
 type EmployerDashboardViewProps = {
   data: EmployerDashboardData;
@@ -22,14 +25,34 @@ function getStatusClassName(status: string) {
 export default function EmployerDashboardView({
   data,
 }: EmployerDashboardViewProps) {
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <main className="min-h-screen bg-slate-50 px-8 py-8">
+      {/* pop up to add new request */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-lg">
+            <RequestModal onClose={() => setShowModal(false)} />
+          </div>
+        </div>
+      )
+      }
+
       <div className="mx-auto max-w-6xl space-y-6">
         <header>
           <h1 className="text-2xl font-semibold text-slate-900">
             Employer Dashboard
           </h1>
         </header>
+        <button
+          onClick={() => setShowModal(true)}
+          className="mb-4 rounded-lg bg-[#49454F] px-4 py-2 text-sm font-medium text-white hover:bg-[#49454F]/90">
+          Create New Request
+        </button>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">
@@ -162,6 +185,6 @@ export default function EmployerDashboardView({
           )}
         </section>
       </div>
-    </main>
+    </main >
   );
 }
