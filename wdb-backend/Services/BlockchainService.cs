@@ -58,6 +58,7 @@ public class BlockchainService : IBlockchainService
     private readonly string _rpcUrl;
     private readonly string _contractAddress;
     private readonly string _abiPath;
+    private readonly ulong? _startBlock;
     private readonly ILogger<BlockchainService> _logger;
 
     private string? _abi;
@@ -76,6 +77,8 @@ public class BlockchainService : IBlockchainService
 
         _abiPath = config["Blockchain:AbiPath"]
             ?? throw new InvalidOperationException("Blockchain:AbiPath not configured");
+
+        _startBlock = ulong.TryParse(config["Blockchain:StartBlock"], out var sb) ? sb : null;
     }
 
     private string GetAbi()
@@ -213,8 +216,11 @@ public class BlockchainService : IBlockchainService
             var contract = web3.Eth.GetContract(GetAbi(), _contractAddress);
 
             var eventHandler = contract.GetEvent<TransactionLogEvent>();
+            var fromBlock = _startBlock.HasValue
+                ? new BlockParameter(new HexBigInteger(_startBlock.Value))
+                : BlockParameter.CreateEarliest();
             var filterInput = eventHandler.CreateFilterInput(
-                fromBlock: BlockParameter.CreateEarliest(),
+                fromBlock: fromBlock,
                 toBlock: BlockParameter.CreateLatest());
 
             var events = await eventHandler.GetAllChangesAsync(filterInput);
