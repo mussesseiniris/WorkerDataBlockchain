@@ -287,3 +287,6 @@ wdb-blockchain/typechain-types/
 # wdb-blockchain/artifacts/
 
 # End of file
+
+# Baked-at-deploy ABI artifacts
+wdb-backend/abi/
