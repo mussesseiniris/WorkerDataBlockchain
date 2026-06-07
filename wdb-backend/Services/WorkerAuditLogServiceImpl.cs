@@ -64,9 +64,10 @@ public class WorkerAuditLogServiceImpl : IWorkerAuditLogService
 
         var employerNameByAddress = employers
             .Where(employer => !string.IsNullOrWhiteSpace(employer.BlockchainAddress))
+            .GroupBy(employer => employer.BlockchainAddress!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
-                employer => employer.BlockchainAddress!,
-                employer => employer.Name,
+                g => g.Key,
+                g => g.First().Name,
                 StringComparer.OrdinalIgnoreCase);
 
         var records = blockchainRecords
