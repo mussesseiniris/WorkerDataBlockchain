@@ -443,11 +443,6 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
                 "REQUEST REVIEW BLOCKCHAIN LOG FAILED. RequestId={RequestId}, Error={ErrorMessage}",
                 requestId,
                 ex.Message);
-
-            // Keep this throw during testing so blockchain failures are visible.
-            // After demo stability is confirmed, this can be removed if the team
-            // wants database review to succeed even when blockchain is unavailable.
-            throw;
         }
     }
 
