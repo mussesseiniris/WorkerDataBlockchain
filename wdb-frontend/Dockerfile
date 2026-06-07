@@ -4,9 +4,11 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 
-# Next.js inlines NEXT_PUBLIC_* at build time, so it must be set BEFORE npm run build.
+# Next.js inlines NEXT_PUBLIC_* at build time, so they must be set BEFORE npm run build.
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 
 RUN npm run build
 
