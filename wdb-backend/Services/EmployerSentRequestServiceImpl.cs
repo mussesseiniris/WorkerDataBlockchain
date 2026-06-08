@@ -24,85 +24,77 @@ public class EmployerSentRequestServiceImpl : IEmployerSentRequestService
             .AnyAsync(e => e.Id == employerId, cancellationToken);
 
         if (!employerExists)
-        {
             throw new UnauthorizedAccessException("Current user is not an employer.");
-        }
 
-        // Pull requests with permissions and both possible label sources
-        // (preset field via Permission.Field, or worker-created item via
-        // Permission.WorkerInfo). Pulling everything in a single query
-        // keeps the per-item resolution simple in memory.
         var requests = await _context.Requests
             .AsNoTracking()
             .Include(r => r.Worker)
             .Include(r => r.Permissions)
-                .ThenInclude(p => p.Field!)
-                    .ThenInclude(f => f.Category)
+                .ThenInclude(p => p.Field)
+                    .ThenInclude(f => f!.Category)
             .Include(r => r.Permissions)
-                .ThenInclude(p => p.WorkerInfo!)
-                    .ThenInclude(wi => wi.Field!)
-                        .ThenInclude(f => f.Category)
+                .ThenInclude(p => p.WorkerInfo)
+                    .ThenInclude(wi => wi!.Field)
+                        .ThenInclude(f => f!.Category)
             .Where(r => r.EmployerId == employerId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return requests.Select(r => new EmployerSentRequestDto
+        return requests.Select(request =>
         {
-            RequestId = r.Id,
-            WorkerId = r.WorkerId,
-            WorkerName = r.Worker.Name,
-            WorkerEmail = r.Worker.Email,
-            Reason = r.Reason,
-            ExpiryDate = r.ExpiryDate,
-            CreatedAt = r.CreatedAt,
-            LastUpdatedAt = r.Permissions.Any()
-                ? (r.Permissions.Max(p => p.LastUpdatedAt) ?? r.CreatedAt)
-                : r.CreatedAt,
-            CustomRequest = r.CustomRequest,
-            CustomRequestStatus = r.CustomRequestStatus,
-            Items = r.Permissions.Select(BuildItem).ToList()
+            var permissionItems = request.Permissions
+                .OrderBy(p => ResolveCategoryName(p))
+                .ThenBy(p => ResolveLabel(p))
+                .Select(p => new EmployerSentRequestItemDto
+                {
+                    PermissionId = p.Id,
+                    CategoryName = ResolveCategoryName(p),
+                    Label = ResolveLabel(p),
+                    Status = p.Status,
+                    IsCustom = p.WorkerInfo?.CustomLabel != null
+                })
+                .ToList();
+
+            return new EmployerSentRequestDto
+            {
+                RequestId = request.Id,
+                WorkerId = request.WorkerId,
+                WorkerName = request.Worker.Name,
+                WorkerEmail = request.Worker.Email,
+                Reason = request.Reason,
+
+                // Pending requests do not have an expiry date yet.
+                // DateTime.MinValue keeps the current DTO contract without pretending
+                // the employer has set an expiry date.
+                ExpiryDate = request.ExpiryDate ?? DateTime.MinValue,
+
+                CreatedAt = request.CreatedAt,
+                LastUpdatedAt = request.Permissions
+                    .Select(p => p.LastUpdatedAt)
+                    .Where(d => d.HasValue)
+                    .Select(d => d!.Value)
+                    .DefaultIfEmpty(request.CreatedAt)
+                    .Max(),
+
+                CustomRequest = request.CustomRequest,
+                CustomRequestStatus = request.CustomRequestStatus,
+                Items = permissionItems
+            };
         }).ToList();
     }
 
-    // Resolve label + category from either side of the dual-pointer permission.
-    private static EmployerSentRequestItemDto BuildItem(Permission p)
+    private static string ResolveCategoryName(Permission permission)
     {
-        if (p.Field != null)
-        {
-            return new EmployerSentRequestItemDto
-            {
-                PermissionId = p.Id,
-                CategoryName = p.Field.Category?.CategoryName ?? "Unknown",
-                Label = p.Field.Label,
-                Status = p.Status,
-                IsCustom = false
-            };
-        }
+        return permission.Field?.Category?.CategoryName
+            ?? permission.WorkerInfo?.Field?.Category?.CategoryName
+            ?? "OtherInformation";
+    }
 
-        if (p.WorkerInfo != null)
-        {
-            var label = p.WorkerInfo.CustomLabel
-                        ?? p.WorkerInfo.Field?.Label
-                        ?? "Unknown";
-            var category = p.WorkerInfo.Field?.Category?.CategoryName
-                           ?? "OtherInformation";
-            return new EmployerSentRequestItemDto
-            {
-                PermissionId = p.Id,
-                CategoryName = category,
-                Label = label,
-                Status = p.Status,
-                IsCustom = p.WorkerInfo.CustomLabel != null
-            };
-        }
-
-        return new EmployerSentRequestItemDto
-        {
-            PermissionId = p.Id,
-            CategoryName = "Unknown",
-            Label = "Unknown",
-            Status = p.Status,
-            IsCustom = false
-        };
+    private static string ResolveLabel(Permission permission)
+    {
+        return permission.Field?.Label
+            ?? permission.WorkerInfo?.Field?.Label
+            ?? permission.WorkerInfo?.CustomLabel
+            ?? "Unknown";
     }
 }

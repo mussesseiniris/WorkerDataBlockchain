@@ -20,6 +20,11 @@ services:
       - Blockchain__RpcUrl=${BLOCKCHAIN_RPC_URL:-http://host.docker.internal:8545}
       - Blockchain__ContractAddress=${BLOCKCHAIN_CONTRACT_ADDRESS}
       - Blockchain__AbiPath=/app/blockchain-artifacts/contracts/TransactionLog.sol/TransactionLog.json
+
+      # Funded local demo wallet used to pay gas for blockchain audit transactions.
+      # The event still records the actual employer and worker blockchain addresses.
+      - Blockchain__SystemPrivateKey=${BLOCKCHAIN_SYSTEM_PRIVATE_KEY}
+
     volumes:
       - ./wdb-blockchain/artifacts:/app/blockchain-artifacts:ro
     networks:

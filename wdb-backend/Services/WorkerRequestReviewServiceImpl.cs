@@ -38,12 +38,9 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
         Guid workerId,
         CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
-
         var requests = await _context.Requests
             .Where(r =>
                 r.WorkerId == workerId &&
-                r.ExpiryDate > now &&
                 (
                     r.Permissions.Any(p => p.Status == PermissionStatus.Pending) ||
                     r.CustomRequestStatus == "pending"
@@ -161,8 +158,22 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
                 cancellationToken)
             ?? throw new KeyNotFoundException("REQUEST_NOT_FOUND");
 
-        if (dataRequest.ExpiryDate <= DateTime.UtcNow)
-            throw new InvalidOperationException("REQUEST_EXPIRED");
+        var hasApprovedDecision = HasApprovedDecision(request);
+
+        if (hasApprovedDecision)
+        {
+            if (!request.ExpiryDate.HasValue)
+                throw new InvalidOperationException("EXPIRY_DATE_REQUIRED");
+
+            if (request.ExpiryDate.Value <= DateTime.UtcNow)
+                throw new InvalidOperationException("INVALID_EXPIRY_DATE");
+
+            dataRequest.ExpiryDate = request.ExpiryDate.Value.ToUniversalTime();
+        }
+        else
+        {
+            dataRequest.ExpiryDate = null;
+        }
 
         await ReviewPermissionItemsAsync(
             workerId,
@@ -204,7 +215,21 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
             customPermissionId,
             customDecision,
             customRequestDescription,
+            dataRequest.ExpiryDate,
             cancellationToken);
+    }
+
+    private static bool HasApprovedDecision(SubmitWorkerRequestReviewRequest request)
+    {
+        var hasApprovedItem = request.Items.Any(i =>
+            i.Decision.Trim().Equals("approved", StringComparison.OrdinalIgnoreCase));
+
+        var hasApprovedCustomRequest =
+            request.CustomRequestDecision != null &&
+            request.CustomRequestDecision.Decision.Trim()
+                .Equals("approved", StringComparison.OrdinalIgnoreCase);
+
+        return hasApprovedItem || hasApprovedCustomRequest;
     }
 
     private async Task ReviewPermissionItemsAsync(
@@ -350,6 +375,7 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
         Guid? customPermissionId,
         string? customDecision,
         string? customRequestDescription,
+        DateTime? expiryDate,
         CancellationToken cancellationToken)
     {
         try
@@ -412,7 +438,8 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
                 permissionsToLog,
                 customDecision,
                 customRequestDescription,
-                customPermissionId);
+                customPermissionId,
+                expiryDate);
 
             _logger.LogWarning(
                 "Writing request-level blockchain review log. RequestId={RequestId}, PermissionCount={PermissionCount}, Summary={Summary}",
@@ -450,9 +477,15 @@ public class WorkerRequestReviewServiceImpl : IWorkerRequestReviewService
         List<Permission> permissions,
         string? customDecision,
         string? customRequestDescription,
-        Guid? customPermissionId)
+        Guid? customPermissionId,
+        DateTime? expiryDate)
     {
         var sections = new List<string>();
+
+        if (expiryDate.HasValue)
+        {
+            sections.Add($"EXPIRY_DATE | {expiryDate.Value:O}");
+        }
 
         var approvedGroups = permissions
             .Where(p => p.Status == PermissionStatus.Approved)

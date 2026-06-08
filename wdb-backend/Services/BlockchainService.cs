@@ -59,6 +59,12 @@ public class BlockchainService : IBlockchainService
     private readonly string _contractAddress;
     private readonly string _abiPath;
     private readonly ulong? _startBlock;
+
+    // Optional funded system wallet.
+    // When configured, it is used as the transaction sender and gas payer.
+    // The event still records the actual employer and worker blockchain addresses.
+    private readonly string? _systemPrivateKey;
+
     private readonly ILogger<BlockchainService> _logger;
 
     private string? _abi;
@@ -79,6 +85,10 @@ public class BlockchainService : IBlockchainService
             ?? throw new InvalidOperationException("Blockchain:AbiPath not configured");
 
         _startBlock = ulong.TryParse(config["Blockchain:StartBlock"], out var sb) ? sb : null;
+
+        // For local demo, this can be the first Hardhat funded account.
+        // For real deployment, this should come from environment variables or secret storage.
+        _systemPrivateKey = config["Blockchain:SystemPrivateKey"];
     }
 
     private string GetAbi()
@@ -136,16 +146,22 @@ public class BlockchainService : IBlockchainService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(privateKey))
-                throw new InvalidOperationException("Private key is required for blockchain logging.");
-
             if (string.IsNullOrWhiteSpace(employerAddress))
                 throw new InvalidOperationException("Employer blockchain address is required.");
 
             if (string.IsNullOrWhiteSpace(workerAddress))
                 throw new InvalidOperationException("Worker blockchain address is required.");
 
-            var account = new Account(privateKey);
+            // Prefer system wallet for gas payment.
+            // Fall back to the passed private key only if SystemPrivateKey is not configured.
+            var senderPrivateKey = !string.IsNullOrWhiteSpace(_systemPrivateKey)
+                ? _systemPrivateKey
+                : privateKey;
+
+            if (string.IsNullOrWhiteSpace(senderPrivateKey))
+                throw new InvalidOperationException("A sender private key is required for blockchain logging.");
+
+            var account = new Account(senderPrivateKey);
             var web3 = new Web3(account, _rpcUrl);
             var contract = web3.Eth.GetContract(GetAbi(), _contractAddress);
             var logFn = contract.GetFunction("logTransaction");
@@ -171,7 +187,8 @@ public class BlockchainService : IBlockchainService
                 ]);
 
             _logger.LogInformation(
-                "Blockchain category log written. Action={Action}, Category={Category}, RequestId={RequestId}, TxHash={TxHash}",
+                "Blockchain category log written. Sender={Sender}, Action={Action}, Category={Category}, RequestId={RequestId}, TxHash={TxHash}",
+                account.Address,
                 action,
                 category,
                 requestId,

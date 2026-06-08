@@ -8,23 +8,28 @@ namespace wdb_backend.Usecases;
 
 /// <summary>
 /// Creates a data access request and the related permission rows.
-/// This version supports:
-/// - preset field request: field_id set, info_id null
-/// - custom field request: info_id set, field_id null
-/// - optional custom_request text stored on the request row
-/// It also creates a NEW_REQUEST notification for the worker.
+///
+/// Blockchain design:
+/// One employer submit request action writes one PermissionRequested blockchain record.
+/// The record contains the whole request summary instead of one record per item.
 /// </summary>
 public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecase
 {
     private readonly AppDbContext _context;
     private readonly IRequestService _requestService;
+    private readonly IBlockchainService _blockchainService;
+    private readonly ILogger<CreateDataAccessRequestUsecaseImpl> _logger;
 
     public CreateDataAccessRequestUsecaseImpl(
         AppDbContext context,
-        IRequestService requestService)
+        IRequestService requestService,
+        IBlockchainService blockchainService,
+        ILogger<CreateDataAccessRequestUsecaseImpl> logger)
     {
         _context = context;
         _requestService = requestService;
+        _blockchainService = blockchainService;
+        _logger = logger;
     }
 
     public async Task CreateDataAccessRequest(
@@ -57,10 +62,9 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
 
         foreach (var selectedId in distinctIds)
         {
-            // 1. Existing worker_info row.
-            // This covers existing custom fields and existing saved preset rows.
             var workerInfo = await _context.WorkerInfos
                 .Include(w => w.Field)
+                    .ThenInclude(f => f!.Category)
                 .FirstOrDefaultAsync(
                     w => w.Id == selectedId && w.WorkerId == workerId,
                     cancellationToken);
@@ -74,7 +78,7 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
                     workerInfo.Id,
                     cancellationToken);
 
-                var permissionForExistingInfo = new Permission
+                _context.Permissions.Add(new Permission
                 {
                     RequestId = request.Id,
                     WorkerId = workerId,
@@ -82,15 +86,13 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
                     InfoId = workerInfo.Id,
                     Status = PermissionStatus.Pending,
                     LastUpdatedAt = DateTime.UtcNow
-                };
+                });
 
-                _context.Permissions.Add(permissionForExistingInfo);
                 continue;
             }
 
-            // 2. Preset field definition.
-            // field_id is set first, info_id is filled only after worker approves.
             var field = await _context.Fields
+                .Include(f => f.Category)
                 .FirstOrDefaultAsync(f => f.Id == selectedId, cancellationToken);
 
             if (field != null)
@@ -102,7 +104,7 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
                     null,
                     cancellationToken);
 
-                var permissionForPresetField = new Permission
+                _context.Permissions.Add(new Permission
                 {
                     RequestId = request.Id,
                     WorkerId = workerId,
@@ -110,16 +112,14 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
                     InfoId = null,
                     Status = PermissionStatus.Pending,
                     LastUpdatedAt = DateTime.UtcNow
-                };
+                });
 
-                _context.Permissions.Add(permissionForPresetField);
                 continue;
             }
 
             throw new KeyNotFoundException("SELECTED_ITEM_NOT_FOUND");
         }
 
-        // Notify the worker that a new request is waiting for review.
         _context.Notifications.Add(new wdb_backend.Models.Notification
         {
             RecipientWorkerId = workerId,
@@ -130,6 +130,129 @@ public class CreateDataAccessRequestUsecaseImpl : ICreateDataAccessRequestUsecas
         });
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await LogRequestCreatedToBlockchainAsync(
+            employerId,
+            workerId,
+            request.Id,
+            customRequest,
+            cancellationToken);
+    }
+
+    private async Task LogRequestCreatedToBlockchainAsync(
+        Guid employerId,
+        Guid workerId,
+        Guid requestId,
+        string? customRequest,
+        CancellationToken cancellationToken)
+    {
+        var employer = await _context.Employers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employerId, cancellationToken)
+            ?? throw new KeyNotFoundException("EMPLOYER_NOT_FOUND_FOR_BLOCKCHAIN_LOG");
+
+        var worker = await _context.Workers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.Id == workerId, cancellationToken)
+            ?? throw new KeyNotFoundException("WORKER_NOT_FOUND_FOR_BLOCKCHAIN_LOG");
+
+        if (string.IsNullOrWhiteSpace(employer.PrivateKey))
+            throw new InvalidOperationException("EMPLOYER_PRIVATE_KEY_MISSING");
+
+        if (string.IsNullOrWhiteSpace(employer.BlockchainAddress))
+            throw new InvalidOperationException("EMPLOYER_BLOCKCHAIN_ADDRESS_MISSING");
+
+        if (string.IsNullOrWhiteSpace(worker.BlockchainAddress))
+            throw new InvalidOperationException("WORKER_BLOCKCHAIN_ADDRESS_MISSING");
+
+        var permissionsToLog = await _context.Permissions
+            .AsNoTracking()
+            .Where(p => p.RequestId == requestId)
+            .Include(p => p.Field)
+                .ThenInclude(f => f!.Category)
+            .Include(p => p.WorkerInfo)
+                .ThenInclude(wi => wi!.Field)
+                    .ThenInclude(f => f!.Category)
+            .ToListAsync(cancellationToken);
+
+        var permissionIds = string.Join(
+            ",",
+            permissionsToLog
+                .OrderBy(ResolveCategory)
+                .ThenBy(ResolveLabel)
+                .Select(p => p.Id.ToString()));
+
+        var requestSummary = BuildRequestCreatedSummary(
+            permissionsToLog,
+            customRequest);
+
+        _logger.LogWarning(
+            "Writing employer request blockchain log. RequestId={RequestId}, PermissionCount={PermissionCount}, Summary={Summary}",
+            requestId,
+            permissionsToLog.Count,
+            requestSummary);
+
+        var txHash = await _blockchainService.LogCategoryTransactionAsync(
+            privateKey: employer.PrivateKey!,
+            employerAddress: employer.BlockchainAddress!,
+            workerAddress: worker.BlockchainAddress!,
+            requestId: requestId.ToString(),
+            category: "RequestAccess",
+            permissionIds: permissionIds,
+            itemLabels: requestSummary,
+            action: BlockchainAction.PermissionRequested,
+            cancellationToken: cancellationToken);
+
+        _logger.LogWarning(
+            "Employer request blockchain log written successfully. RequestId={RequestId}, TxHash={TxHash}",
+            requestId,
+            txHash);
+    }
+
+    private static string BuildRequestCreatedSummary(
+        List<Permission> permissions,
+        string? customRequest)
+    {
+        var sections = new List<string>();
+
+        var requestedGroups = permissions
+            .GroupBy(ResolveCategory)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        if (requestedGroups.Any())
+        {
+            var requestedText = string.Join(
+                "; ",
+                requestedGroups.Select(g =>
+                    $"{g.Key}: {string.Join(", ", g.OrderBy(ResolveLabel).Select(ResolveLabel))}"));
+
+            sections.Add($"REQUESTED | {requestedText}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(customRequest))
+        {
+            sections.Add($"CUSTOM_REQUEST | pending: {customRequest.Trim()}");
+        }
+
+        return sections.Any()
+            ? string.Join(" || ", sections)
+            : "No requested items were attached to this access request.";
+    }
+
+    private static string ResolveLabel(Permission permission)
+    {
+        return permission.Field?.Label
+            ?? permission.WorkerInfo?.Field?.Label
+            ?? permission.WorkerInfo?.CustomLabel
+            ?? "Unknown";
+    }
+
+    private static string ResolveCategory(Permission permission)
+    {
+        return permission.Field?.Category?.CategoryName
+            ?? permission.WorkerInfo?.Field?.Category?.CategoryName
+            ?? "OtherInformation";
     }
 
     private async Task EnsureNotAlreadyRequestedAsync(

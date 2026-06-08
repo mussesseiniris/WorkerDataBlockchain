@@ -101,6 +101,14 @@ public class WorkerRequestReviewController : ControllerBase
         {
             return BadRequest(new { message = "No review items were provided." });
         }
+        catch (InvalidOperationException ex) when (ex.Message == "EXPIRY_DATE_REQUIRED")
+        {
+            return BadRequest(new { message = "Please set an expiry date when approving access." });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "INVALID_EXPIRY_DATE")
+        {
+            return BadRequest(new { message = "Expiry date must be in the future." });
+        }
         catch (InvalidOperationException ex) when (ex.Message == "DUPLICATE_REVIEW_ITEM")
         {
             return BadRequest(new { message = "The same permission was reviewed more than once." });

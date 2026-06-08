@@ -34,11 +34,12 @@ public class Request
     public required string Reason { get; set; }
 
     /// <summary>
-    /// The date and time at which all permissions under this request expire.
-    /// Shared by every permission row belonging to this request.
+    /// The date and time at which all approved permissions under this request expire.
+    /// This is set by the worker during review, not by the employer.
+    /// It is null while the request is pending or fully rejected.
     /// </summary>
     [Column("expiry_date")]
-    public required DateTime ExpiryDate { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 
     /// <summary>
     /// Free-text description of additional data the employer needs that the worker

@@ -3,7 +3,7 @@ export interface WorkerActiveRequest {
   employerId: string;
   companyName: string;
   reason: string;
-  expiryDate: string;
+  expiryDate?: string | null;
   createdAt: string;
   items: WorkerRequestReviewItem[];
   customRequest?: WorkerCustomRequest | null;
@@ -29,6 +29,7 @@ export interface WorkerCustomRequest {
 }
 
 export interface SubmitWorkerReviewPayload {
+  expiryDate?: string | null;
   items: {
     permissionId: string;
     decision: 'approved' | 'rejected';

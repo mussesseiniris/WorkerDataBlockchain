@@ -16,7 +16,7 @@ public class RequestRepoImpl : IRequestRepository
 
     /// <summary>
     /// Create a new request.
-    /// ExpiryDate defaults to 90 days from now.
+    /// ExpiryDate is intentionally null because the worker sets it during review.
     /// If customRequest is provided, it is stored as a pending custom request.
     /// </summary>
     public async Task<Request> AddAsync(
@@ -35,7 +35,7 @@ public class RequestRepoImpl : IRequestRepository
             EmployerId = employerId,
             WorkerId = workerId,
             Reason = reason.Trim(),
-            ExpiryDate = DateTime.UtcNow.AddDays(90),
+            ExpiryDate = null,
             CustomRequest = trimmedCustomRequest,
             CustomRequestStatus = trimmedCustomRequest == null ? null : "pending"
         };

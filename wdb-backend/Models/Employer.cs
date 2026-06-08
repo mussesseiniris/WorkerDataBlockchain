@@ -57,4 +57,18 @@ public class Employer : IUser
     /// </summary>
     [Column("private_key")]
     public string? PrivateKey { get; set; }
+
+
+    [Column("certification_status")]
+    public string? CertificationStatus { get; set; }
+
+
+    [Column("certification_file_name")]
+    public string? CertificationFileName { get; set; }
+
+    [Column("certification_file_path")]
+    public string? CertificationFilePath { get; set; }
+
+    [Column("certification_uploaded_at")]
+    public DateTime? CertificationUploadedAt { get; set; }
 }

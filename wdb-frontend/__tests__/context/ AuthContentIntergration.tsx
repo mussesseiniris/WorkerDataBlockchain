@@ -41,7 +41,9 @@ describe("AuthContext integration test", () => {
     });
 
     it("should render EmployerRequestsPage with auth context", () => {
-        renderWithAuth(<EmployerRequestsPage />, {
+        renderWithAuth(<EmployerRequestsPage onClose={function (): void {
+            throw new Error("Function not implemented.");
+        }} />, {
             token: 'fake-token',
             role: 'employer',
             userId: '123',

@@ -1,4 +1,5 @@
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5258'}/api/employer-request`;
+const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5258'
+  }/api/employer-request`;
 
 export interface EmployerRequestCatalogWorker {
   id: string;
@@ -33,8 +34,6 @@ export interface EmployerRequestCatalog {
 export interface CreateEmployerRequestPayload {
   workerEmail: string;
   reason: string;
-  // ISO 8601 string; the API treats it as UTC.
-  expiryDate: string;
   presetFieldIds: string[];
   customWorkerInfoIds: string[];
   customRequest?: string;
@@ -48,16 +47,21 @@ export async function fetchRequestCatalog(
   token: string,
   email: string,
 ): Promise<EmployerRequestCatalog> {
-  const res = await fetch(`${BASE_URL}/catalog?email=${encodeURIComponent(email)}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${BASE_URL}/catalog?email=${encodeURIComponent(email)}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     },
-  });
+  );
+
   if (!res.ok) {
     throw new Error(`Failed to load catalog (${res.status})`);
   }
+
   return res.json();
 }
 
@@ -73,8 +77,10 @@ export async function createEmployerRequest(
     },
     body: JSON.stringify(payload),
   });
+
   if (!res.ok) {
     throw new Error(`Failed to create request (${res.status})`);
   }
+
   return res.json();
 }

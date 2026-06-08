@@ -49,7 +49,10 @@ public class EmployerActiveAccessServiceImpl : IEmployerActiveAccessService
                 .ThenInclude(p => p.WorkerInfo!)
                     .ThenInclude(wi => wi.Field!)
                         .ThenInclude(f => f.Category)
-            .Where(r => r.EmployerId == employerId && r.ExpiryDate > now)
+            .Where(r =>
+                r.EmployerId == employerId &&
+                r.ExpiryDate.HasValue &&
+                r.ExpiryDate.Value > now)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -62,7 +65,9 @@ public class EmployerActiveAccessServiceImpl : IEmployerActiveAccessService
             var approvedPerms = request.Permissions
                 .Where(p => p.Status == PermissionStatus.Approved && p.WorkerInfo != null)
                 .ToList();
-            if (approvedPerms.Count == 0) continue;
+
+            if (approvedPerms.Count == 0)
+                continue;
 
             var groups = approvedPerms
                 .Select(p => new
@@ -97,7 +102,7 @@ public class EmployerActiveAccessServiceImpl : IEmployerActiveAccessService
                 WorkerEmail = request.Worker.Email,
                 Reason = request.Reason,
                 GrantedAt = approvedPerms.Max(p => p.LastUpdatedAt) ?? request.CreatedAt,
-                ExpiryDate = request.ExpiryDate,
+                ExpiryDate = request.ExpiryDate!.Value,
                 Categories = groups
             });
         }
@@ -127,7 +132,8 @@ public class EmployerActiveAccessServiceImpl : IEmployerActiveAccessService
             throw new InvalidOperationException("Permission is not approved.");
         }
 
-        if (permission.Request.ExpiryDate <= DateTime.UtcNow)
+        if (!permission.Request.ExpiryDate.HasValue ||
+            permission.Request.ExpiryDate.Value <= DateTime.UtcNow)
         {
             throw new InvalidOperationException("Permission has expired.");
         }
@@ -160,7 +166,9 @@ public class EmployerActiveAccessServiceImpl : IEmployerActiveAccessService
             {
                 throw new InvalidOperationException("No file path stored for this item.");
             }
+
             var signed = await _storage.CreateSignedUrlAsync(info.Value, 900, cancellationToken);
+
             return new EmployerAccessViewResultDto
             {
                 Type = "file",

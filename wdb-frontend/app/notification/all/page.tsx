@@ -36,17 +36,17 @@ export default function AllNotificationsPage() {
             };
 
             const [unreadRes, readRes] = await Promise.all([
-                fetch(`${API_URL}/api/notification/unread/${userId}`, { headers }),
-                fetch(`${API_URL}/api/notification/read/${userId}`, { headers })
+                fetch(`${API_URL}/api/notification/employer/me?isRead=false`, { headers }),
+                fetch(`${API_URL}/api/notification/employer/me?isRead=true`, { headers })
             ]);
 
             if (unreadRes.ok) {
                 const data = await unreadRes.json();
-                setUnread(data.data ?? []);
+                setUnread(Array.isArray(data) ? data : data.data ?? []);
             }
             if (readRes.ok) {
                 const data = await readRes.json();
-                setRead(data.data ?? []);
+                setRead(Array.isArray(data) ? data : data.data ?? []);
             }
         };
         loadAll();

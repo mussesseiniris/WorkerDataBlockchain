@@ -26,6 +26,7 @@ type RequestReviewState = {
   itemDecisions: Record<string, ReviewDecision>;
   customDecision?: ReviewDecision;
   customForm: CustomFormState;
+  expiryDate: string;
 };
 
 function formatDateTime(dateString: string) {
@@ -37,16 +38,6 @@ function formatDateTime(dateString: string) {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
-}
-
-function formatDate(dateString: string) {
-  if (!dateString) return '-';
-
-  return new Date(dateString).toLocaleDateString('en-NZ', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
   });
 }
 
@@ -70,16 +61,19 @@ function categoryLabel(category: string) {
 }
 
 function groupItemsByCategory(items: WorkerRequestReviewItem[]) {
-  return items.reduce<Record<string, WorkerRequestReviewItem[]>>((groups, item) => {
-    const category = item.category || 'OtherInformation';
+  return items.reduce<Record<string, WorkerRequestReviewItem[]>>(
+    (groups, item) => {
+      const category = item.category || 'OtherInformation';
 
-    if (!groups[category]) {
-      groups[category] = [];
-    }
+      if (!groups[category]) {
+        groups[category] = [];
+      }
 
-    groups[category].push(item);
-    return groups;
-  }, {});
+      groups[category].push(item);
+      return groups;
+    },
+    {},
+  );
 }
 
 function getDefaultCustomForm(request: WorkerActiveRequest): CustomFormState {
@@ -88,6 +82,22 @@ function getDefaultCustomForm(request: WorkerActiveRequest): CustomFormState {
     type: 'text',
     value: '',
   };
+}
+
+function hasAnyApprovedDecision(
+  request: WorkerActiveRequest,
+  state?: RequestReviewState,
+) {
+  if (!state) return false;
+
+  const hasApprovedItem = request.items.some(
+    (item) => state.itemDecisions[item.permissionId] === 'approved',
+  );
+
+  const hasApprovedCustomRequest =
+    request.customRequest && state.customDecision === 'approved';
+
+  return hasApprovedItem || Boolean(hasApprovedCustomRequest);
 }
 
 export default function ActiveRequestTab({
@@ -123,6 +133,7 @@ export default function ActiveRequestTab({
                 itemDecisions: {},
                 customDecision: undefined,
                 customForm: getDefaultCustomForm(request),
+                expiryDate: '',
               };
             }
           });
@@ -165,6 +176,7 @@ export default function ActiveRequestTab({
           type: 'text',
           value: '',
         },
+        expiryDate: current[requestId]?.expiryDate ?? '',
       },
     }));
   }
@@ -180,6 +192,7 @@ export default function ActiveRequestTab({
           type: 'text',
           value: '',
         },
+        expiryDate: current[requestId]?.expiryDate ?? '',
       },
     }));
   }
@@ -199,6 +212,23 @@ export default function ActiveRequestTab({
           value: current[requestId]?.customForm.value ?? '',
           ...updates,
         },
+        expiryDate: current[requestId]?.expiryDate ?? '',
+      },
+    }));
+  }
+
+  function updateExpiryDate(requestId: string, expiryDate: string) {
+    setReviewStates((current) => ({
+      ...current,
+      [requestId]: {
+        itemDecisions: current[requestId]?.itemDecisions ?? {},
+        customDecision: current[requestId]?.customDecision,
+        customForm: current[requestId]?.customForm ?? {
+          label: '',
+          type: 'text',
+          value: '',
+        },
+        expiryDate,
       },
     }));
   }
@@ -238,6 +268,18 @@ export default function ActiveRequestTab({
       }
     }
 
+    if (hasAnyApprovedDecision(request, state)) {
+      if (!state.expiryDate) {
+        return 'Please set an expiry date for the approved access.';
+      }
+
+      const expiry = new Date(`${state.expiryDate}T23:59:59`);
+
+      if (Number.isNaN(expiry.getTime()) || expiry <= new Date()) {
+        return 'Expiry date must be in the future.';
+      }
+    }
+
     return '';
   }
 
@@ -255,11 +297,21 @@ export default function ActiveRequestTab({
 
     const state = reviewStates[request.requestId];
 
+    if (!state) {
+      setErrorMsg('Please review all requested items before submitting.');
+      return;
+    }
+
+    const approved = hasAnyApprovedDecision(request, state);
+
     setSubmittingRequestId(request.requestId);
     setErrorMsg('');
 
     try {
       await submitWorkerRequestReview(token, request.requestId, {
+        expiryDate: approved
+          ? new Date(`${state.expiryDate}T23:59:59`).toISOString()
+          : null,
         items: request.items.map((item) => ({
           permissionId: item.permissionId,
           decision: state.itemDecisions[item.permissionId],
@@ -289,7 +341,7 @@ export default function ActiveRequestTab({
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Loading active requests...</p>
+        <p className="text-sm text-slate-600">Loading active requests...</p>
       </div>
     );
   }
@@ -302,9 +354,10 @@ export default function ActiveRequestTab({
             <h2 className="text-lg font-semibold text-slate-900">
               Active Requests
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-600">
               Review each request as a group. Choose approve or reject for every
-              item, then submit the whole request.
+              item, set an expiry date if approving access, then submit the whole
+              request.
             </p>
           </div>
 
@@ -322,7 +375,7 @@ export default function ActiveRequestTab({
       </section>
 
       {requests.length === 0 ? (
-        <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-500">
+        <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-600">
           No active permission requests.
         </section>
       ) : (
@@ -331,6 +384,7 @@ export default function ActiveRequestTab({
           const groupedItems = groupItemsByCategory(request.items);
           const readyToSubmit = isRequestReadyToSubmit(request);
           const isSubmitting = submittingRequestId === request.requestId;
+          const approvalSelected = hasAnyApprovedDecision(request, state);
 
           return (
             <section
@@ -342,12 +396,11 @@ export default function ActiveRequestTab({
                   <h3 className="text-base font-semibold text-slate-900">
                     {request.companyName || 'Unknown company'}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-sm text-slate-700">
                     Purpose: {request.reason || '-'}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Requested {formatDateTime(request.createdAt)} · Expires{' '}
-                    {formatDate(request.expiryDate)}
+                  <p className="mt-1 text-xs font-medium text-slate-600">
+                    Requested {formatDateTime(request.createdAt)}
                   </p>
                 </div>
 
@@ -366,7 +419,7 @@ export default function ActiveRequestTab({
                       <h4 className="text-sm font-semibold text-slate-900">
                         {categoryLabel(category)}
                       </h4>
-                      <span className="rounded-full bg-white px-2 py-1 text-xs text-slate-500">
+                      <span className="rounded-full bg-white px-2 py-1 text-xs text-slate-600">
                         {items.length} item{items.length === 1 ? '' : 's'}
                       </span>
                     </div>
@@ -403,7 +456,7 @@ export default function ActiveRequestTab({
                                   )}
                                 </div>
 
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-slate-600">
                                   {item.hasValue
                                     ? `Saved value: ${item.value}`
                                     : item.cannotApproveReason ??
@@ -484,7 +537,7 @@ export default function ActiveRequestTab({
                           )}
                         </div>
 
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-slate-700">
                           {request.customRequest.description}
                         </p>
 
@@ -529,7 +582,7 @@ export default function ActiveRequestTab({
                         {state?.customDecision === 'approved' && (
                           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_140px_1fr]">
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-slate-600">
+                              <label className="mb-1 block text-xs font-medium text-slate-700">
                                 Label
                               </label>
                               <input
@@ -539,13 +592,13 @@ export default function ActiveRequestTab({
                                     label: event.target.value,
                                   })
                                 }
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                                 placeholder="e.g. Site Access Card Number"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-slate-600">
+                              <label className="mb-1 block text-xs font-medium text-slate-700">
                                 Type
                               </label>
                               <select
@@ -555,7 +608,7 @@ export default function ActiveRequestTab({
                                     type: event.target.value as 'text' | 'file',
                                   })
                                 }
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                               >
                                 <option value="text">Text</option>
                                 <option value="file">File</option>
@@ -563,7 +616,7 @@ export default function ActiveRequestTab({
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-slate-600">
+                              <label className="mb-1 block text-xs font-medium text-slate-700">
                                 Value
                               </label>
                               <input
@@ -573,7 +626,7 @@ export default function ActiveRequestTab({
                                     value: event.target.value,
                                   })
                                 }
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
                                 placeholder="Enter the information to share"
                               />
                             </div>
@@ -584,8 +637,29 @@ export default function ActiveRequestTab({
                   </div>
                 )}
 
+                <div className="rounded-xl border border-slate-300 bg-white p-4">
+                  <label className="block text-sm font-semibold text-slate-950">
+                    Access expiry date
+                  </label>
+
+                  <p className="mt-1 text-sm text-slate-700">
+                    Required only if you approve at least one item. The company
+                    can access approved data until the end of this date.
+                  </p>
+
+                  <input
+                    type="date"
+                    value={state?.expiryDate ?? ''}
+                    disabled={!approvalSelected || isSubmitting}
+                    onChange={(event) =>
+                      updateExpiryDate(request.requestId, event.target.value)
+                    }
+                    className="mt-3 w-full max-w-xs rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm font-medium text-slate-950 focus:border-slate-900 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+                  />
+                </div>
+
                 <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs font-medium text-slate-600">
                     This request will only be submitted after every item has a
                     decision.
                   </p>

@@ -9,7 +9,13 @@ public class WorkerActiveRequestDto
     public Guid EmployerId { get; set; }
     public string CompanyName { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;
-    public DateTime ExpiryDate { get; set; }
+
+    /// <summary>
+    /// Null while the request is pending.
+    /// The worker sets this value when approving access.
+    /// </summary>
+    public DateTime? ExpiryDate { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public List<WorkerRequestReviewItemDto> Items { get; set; } = new();
@@ -59,6 +65,12 @@ public class WorkerCustomRequestDto
 /// </summary>
 public class SubmitWorkerRequestReviewRequest
 {
+    /// <summary>
+    /// Required if the worker approves at least one permission item or approves a custom request.
+    /// Not required if the worker rejects everything.
+    /// </summary>
+    public DateTime? ExpiryDate { get; set; }
+
     public List<SubmitWorkerRequestReviewItem> Items { get; set; } = new();
 
     /// <summary>

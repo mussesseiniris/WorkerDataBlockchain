@@ -27,6 +27,7 @@ public class ActiveAccessServiceImpl : IActiveAccessService
     /// Return active approved permissions for the worker.
     /// A permission is active only when:
     /// - permission.status = Approved
+    /// - related request has an expiry date
     /// - related request has not expired
     /// </summary>
     public async Task<List<ActiveAccessDto>> GetActiveAccessAsync(
@@ -39,7 +40,8 @@ public class ActiveAccessServiceImpl : IActiveAccessService
         var requests = await _context.Requests
             .Where(r =>
                 r.WorkerId == workerId &&
-                r.ExpiryDate > now &&
+                r.ExpiryDate.HasValue &&
+                r.ExpiryDate.Value > now &&
                 r.Permissions.Any(p => p.Status == PermissionStatus.Approved))
             .Include(r => r.Permissions)
                 .ThenInclude(p => p.WorkerInfo)
@@ -138,8 +140,11 @@ public class ActiveAccessServiceImpl : IActiveAccessService
                 cancellationToken)
             ?? throw new KeyNotFoundException("REQUEST_NOT_FOUND");
 
-        if (dataRequest.ExpiryDate <= DateTime.UtcNow)
+        if (!dataRequest.ExpiryDate.HasValue ||
+            dataRequest.ExpiryDate.Value <= DateTime.UtcNow)
+        {
             throw new InvalidOperationException("REQUEST_EXPIRED");
+        }
 
         var approvedPermissions = dataRequest.Permissions
             .Where(p => p.Status == PermissionStatus.Approved)
@@ -258,6 +263,8 @@ public class ActiveAccessServiceImpl : IActiveAccessService
                 ex.Message);
 
             // Keep this throw during testing so blockchain failures are visible.
+            // After demo stability is confirmed, this can be removed if the team
+            // wants database revoke to succeed even when blockchain is unavailable.
             throw;
         }
     }

@@ -64,7 +64,9 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Request>(e =>
         {
-            e.Property(r => r.ExpiryDate).IsRequired();
+            // ExpiryDate is set by the worker during review.
+            // It must be nullable while the request is still pending.
+            e.Property(r => r.ExpiryDate).IsRequired(false);
 
             e.HasMany(r => r.Permissions)
              .WithOne(p => p.Request)
