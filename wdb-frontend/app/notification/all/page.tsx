@@ -24,11 +24,11 @@ export default function AllNotificationsPage() {
     const [unread, setUnread] = useState<NotificationItem[]>([]);
     const [read, setRead] = useState<NotificationItem[]>([]);
     // Centralized auth state. The effect below depends on userId/token so it re-runs after login.
-    const { userId, token, isAuthReady } = useAuth();
+    const { userId, token, isAuthReady, role } = useAuth();
 
     useEffect(() => {
         // Wait until AuthContext finishes restoring; then skip when no user is present.
-        if (!isAuthReady || !userId || !token) return;
+        if (!isAuthReady || !userId || !token || !role) return;
         const loadAll = async () => {
             const headers = {
                 'Content-Type': 'application/json',
@@ -36,8 +36,8 @@ export default function AllNotificationsPage() {
             };
 
             const [unreadRes, readRes] = await Promise.all([
-                fetch(`${API_URL}/api/notification/employer/me?isRead=false`, { headers }),
-                fetch(`${API_URL}/api/notification/employer/me?isRead=true`, { headers })
+                fetch(`${API_URL}/api/notification/${role}/me?isRead=false`, { headers }),
+                fetch(`${API_URL}/api/notification/${role}/me?isRead=true`, { headers })
             ]);
 
             if (unreadRes.ok) {
@@ -50,7 +50,7 @@ export default function AllNotificationsPage() {
             }
         };
         loadAll();
-    }, [isAuthReady, userId, token]);
+    }, [isAuthReady, userId, token, role]);
 
     async function markAsRead(notificationId: string) {
         if (!token) return;

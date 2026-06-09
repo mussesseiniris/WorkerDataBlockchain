@@ -44,7 +44,7 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
     useEffect(() => {
         if (!isAuthReady || !userId || !token) return
         const load = async () => {
-            const res = await fetch(`${API_URL}/api/notification/employer/me?isRead=false`, {
+            const res = await fetch(`${API_URL}/api/notification/${role}/me?isRead=false`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -57,7 +57,7 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
             setNotifications(Array.isArray(response) ? response : response.data ?? [])
         }
         load()
-    }, [isAuthReady, userId, token, refreshKey])
+    }, [isAuthReady, userId, token, role, refreshKey])
 
     // signify a notification as read
     async function markAsRead(notificationId: string) {

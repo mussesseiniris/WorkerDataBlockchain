@@ -11,6 +11,7 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
 {
     private const int PartiallyApprovedStatus = 4;
     private const int DashboardListLimit = 3;
+    private const int DashboardItemPreviewLimit = 3;
 
     private readonly AppDbContext _dbContext;
     private readonly IBlockchainService _blockchainService;
@@ -327,6 +328,7 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
             nameof(BlockchainAction.PermissionRejected) => "Request rejected",
             nameof(BlockchainAction.DataViewed) => "Data viewed",
             nameof(BlockchainAction.PermissionRevoked) => "Access revoked",
+            nameof(BlockchainAction.RequestReviewed) => "Request reviewed",
             _ => "Blockchain activity"
         };
     }
@@ -335,29 +337,215 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
         BlockchainTransactionResponse log,
         string employerName)
     {
-        var itemText = string.IsNullOrWhiteSpace(log.ItemLabels)
-            ? "your data"
-            : log.ItemLabels;
+        var summary = ParseBlockchainSummary(log.ItemLabels);
 
         return log.Action switch
         {
             nameof(BlockchainAction.PermissionRequested) =>
-                $"{employerName} requested access to {itemText}.",
+                BuildMessage(
+                    $"{employerName} requested access to your data.",
+                    summary,
+                    ("REQUESTED", "Requested"),
+                    ("ACCESSED", "Requested")),
 
             nameof(BlockchainAction.PermissionApproved) =>
-                $"You approved access to {itemText} for {employerName}.",
+                BuildMessage(
+                    $"You approved {employerName}'s request.",
+                    summary,
+                    ("APPROVED", "Approved")),
 
             nameof(BlockchainAction.PermissionRejected) =>
-                $"You rejected a data request from {employerName}.",
+                BuildMessage(
+                    $"You rejected {employerName}'s request.",
+                    summary,
+                    ("REJECTED", "Rejected")),
 
             nameof(BlockchainAction.DataViewed) =>
-                $"{employerName} viewed approved data: {itemText}.",
+                BuildMessage(
+                    $"{employerName} viewed approved data.",
+                    summary,
+                    ("ACCESSED", "Viewed"),
+                    ("VIEWED", "Viewed")),
 
             nameof(BlockchainAction.PermissionRevoked) =>
-                $"You revoked {employerName}'s access to {itemText}.",
+                BuildMessage(
+                    $"You revoked {employerName}'s access.",
+                    summary,
+                    ("REVOKED", "Revoked")),
+
+            nameof(BlockchainAction.RequestReviewed) =>
+                BuildMessage(
+                    $"You reviewed {employerName}'s request.",
+                    summary,
+                    ("APPROVED", "Approved"),
+                    ("REJECTED", "Rejected")),
 
             _ =>
-                $"A blockchain activity was recorded for {employerName}."
+                BuildMessage(
+                    $"A blockchain activity was recorded for {employerName}.",
+                    summary,
+                    ("APPROVED", "Approved"),
+                    ("REJECTED", "Rejected"),
+                    ("REVOKED", "Revoked"),
+                    ("ACCESSED", "Accessed"),
+                    ("REQUESTED", "Requested"))
         };
+    }
+
+    private static string BuildMessage(
+        string baseMessage,
+        Dictionary<string, List<string>> summary,
+        params (string Key, string Label)[] sections)
+    {
+        var lines = new List<string> { baseMessage };
+
+        foreach (var section in sections)
+        {
+            if (!summary.TryGetValue(section.Key, out var items) || items.Count == 0)
+            {
+                continue;
+            }
+
+            lines.Add($"{section.Label}: {FormatItemPreview(items)}");
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private static string FormatItemPreview(List<string> items)
+    {
+        var cleanItems = items
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (cleanItems.Count == 0)
+        {
+            return "No item details recorded.";
+        }
+
+        if (cleanItems.Count <= DashboardItemPreviewLimit)
+        {
+            return string.Join(", ", cleanItems);
+        }
+
+        var preview = string.Join(", ", cleanItems.Take(DashboardItemPreviewLimit));
+        var remainingCount = cleanItems.Count - DashboardItemPreviewLimit;
+
+        return $"{preview} and {remainingCount} more";
+    }
+
+    private static Dictionary<string, List<string>> ParseBlockchainSummary(string? itemLabels)
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(itemLabels))
+        {
+            return result;
+        }
+
+        var sections = itemLabels
+            .Split("||", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var section in sections)
+        {
+            var separatorIndex = section.IndexOf('|');
+
+            if (separatorIndex < 0)
+            {
+                AddItems(result, "UNKNOWN", ExtractItemLabels(section));
+                continue;
+            }
+
+            var key = section[..separatorIndex].Trim().ToUpperInvariant();
+            var content = section[(separatorIndex + 1)..].Trim();
+
+            if (key == "CUSTOM_REQUEST")
+            {
+                AddCustomRequestResult(result, content);
+                continue;
+            }
+
+            AddItems(result, key, ExtractItemLabels(content));
+        }
+
+        return result;
+    }
+
+    private static void AddCustomRequestResult(
+        Dictionary<string, List<string>> result,
+        string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return;
+        }
+
+        var normalized = content.Trim();
+
+        if (normalized.StartsWith("approved:", StringComparison.OrdinalIgnoreCase))
+        {
+            var label = normalized["approved:".Length..].Trim();
+            AddItems(result, "APPROVED", new List<string> { $"Custom request: {label}" });
+            return;
+        }
+
+        if (normalized.StartsWith("rejected:", StringComparison.OrdinalIgnoreCase))
+        {
+            var label = normalized["rejected:".Length..].Trim();
+            AddItems(result, "REJECTED", new List<string> { $"Custom request: {label}" });
+            return;
+        }
+
+        AddItems(result, "UNKNOWN", new List<string> { $"Custom request: {normalized}" });
+    }
+
+    private static List<string> ExtractItemLabels(string content)
+    {
+        var labels = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return labels;
+        }
+
+        var groups = content
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var group in groups)
+        {
+            var colonIndex = group.IndexOf(':');
+            var itemPart = colonIndex >= 0
+                ? group[(colonIndex + 1)..]
+                : group;
+
+            var items = itemPart
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToList();
+
+            labels.AddRange(items);
+        }
+
+        return labels;
+    }
+
+    private static void AddItems(
+        Dictionary<string, List<string>> result,
+        string key,
+        List<string> items)
+    {
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        if (!result.ContainsKey(key))
+        {
+            result[key] = new List<string>();
+        }
+
+        result[key].AddRange(items);
     }
 }

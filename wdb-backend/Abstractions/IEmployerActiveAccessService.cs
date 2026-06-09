@@ -8,10 +8,11 @@ public interface IEmployerActiveAccessService
         Guid employerId,
         CancellationToken cancellationToken = default);
 
-    // E4 view: validates ownership/status/expiry and returns text inline
-    // or a short-lived Supabase signed URL for file items.
-    Task<EmployerAccessViewResultDto> ViewAsync(
+    // E4 request-level view:
+    // validates ownership/status/expiry and returns all approved text values
+    // and short-lived Supabase signed URLs for file items under the request.
+    Task<EmployerRequestAccessViewDto> ViewRequestAsync(
         Guid employerId,
-        Guid permissionId,
+        Guid requestId,
         CancellationToken cancellationToken = default);
 }

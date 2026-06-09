@@ -2,112 +2,68 @@
 
 import { useEffect, useState } from 'react';
 import {
-  viewAccessItem,
+  viewAccessRequest,
   ViewAccessError,
-  type AccessViewResult,
+  type RequestAccessViewResult,
 } from '@/lib/api/employerActiveAccessApi';
 
 interface AccessViewModalProps {
-  permissionId: string;
-  itemLabel: string;
-  itemType: 'text' | 'file';
+  requestId: string;
+  workerName: string;
+  workerEmail: string;
+  reason: string;
   onClose: () => void;
 }
 
-// Supabase serves signed-URL responses with X-Frame-Options: SAMEORIGIN,
-// which blocks cross-origin iframe embedding. Fetch the file via JS,
-// then render through a same-origin blob: URL.
-function FileFrame({ signedUrl, title }: { signedUrl: string; title: string }) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [err, setErr] = useState('');
-
-  useEffect(() => {
-    let revoked = false;
-    let createdUrl: string | null = null;
-
-    fetch(signedUrl)
-      .then((r) => {
-        if (!r.ok) throw new Error(`Storage returned ${r.status}`);
-        return r.blob();
-      })
-      .then((blob) => {
-        if (revoked) return;
-        createdUrl = URL.createObjectURL(blob);
-        setBlobUrl(createdUrl);
-      })
-      .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-
-    return () => {
-      revoked = true;
-      if (createdUrl) URL.revokeObjectURL(createdUrl);
-    };
-  }, [signedUrl]);
-
-  if (err) {
-    return (
-      <p className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-        Failed to load file: {err}
-      </p>
-    );
-  }
-
-  if (!blobUrl) {
-    return <p className="text-sm text-slate-500">Loading file...</p>;
-  }
-
-  return (
-    <iframe
-      src={`${blobUrl}#toolbar=0&navpanes=0`}
-      className="w-full rounded-lg border border-slate-200"
-      style={{ height: '70vh' }}
-      title={title}
-    />
-  );
-}
-
 export default function AccessViewModal({
-  permissionId,
-  itemLabel,
-  itemType,
+  requestId,
+  workerName,
+  workerEmail,
+  reason,
   onClose,
 }: AccessViewModalProps) {
-  const [result, setResult] = useState<AccessViewResult | null>(null);
+  const [result, setResult] = useState<RequestAccessViewResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     async function load() {
       const token = localStorage.getItem('accessToken');
+
       if (!token) {
         setErrorMsg('Not authenticated.');
         setIsLoading(false);
         return;
       }
+
       try {
-        const data = await viewAccessItem(token, permissionId);
+        const data = await viewAccessRequest(token, requestId);
         setResult(data);
       } catch (err) {
         if (err instanceof ViewAccessError) {
-          if (err.status === 503) {
-            setErrorMsg('File storage is not configured. Please contact your administrator.');
+          if (err.status === 503 && err.detail === 'BLOCKCHAIN_LOG_FAILED') {
+            setErrorMsg('Blockchain logging failed. The data was not displayed.');
+          } else if (err.status === 503) {
+            setErrorMsg(err.detail || 'A required service is not available.');
           } else if (err.status === 404) {
-            setErrorMsg('Permission not found.');
+            setErrorMsg('Request not found.');
           } else if (err.status === 422) {
-            setErrorMsg(err.detail || 'Cannot view this data right now.');
+            setErrorMsg(err.detail || 'Cannot view this request data right now.');
           } else if (err.status === 403) {
-            setErrorMsg('You do not have access to this data.');
+            setErrorMsg('You do not have access to this request.');
           } else {
-            setErrorMsg('Failed to load data.');
+            setErrorMsg('Failed to load request data.');
           }
         } else {
-          setErrorMsg('Failed to load data.');
+          setErrorMsg('Failed to load request data.');
         }
       } finally {
         setIsLoading(false);
       }
     }
+
     load();
-  }, [permissionId]);
+  }, [requestId]);
 
   return (
     <div
@@ -116,51 +72,137 @@ export default function AccessViewModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 max-h-[90vh] overflow-y-auto"
+        className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-6 shadow-lg"
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">{itemLabel}</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              {itemType === 'file' ? 'File document' : 'Text value'}
+            <h2 className="text-xl font-semibold text-slate-900">
+              Approved Request Data
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {workerName} · {workerEmail}
+            </p>
+
+            <p className="mt-2 text-sm text-slate-600">
+              <span className="font-medium text-slate-700">Reason:</span> {reason}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              Opening this modal records one request-level data access event on blockchain.
             </p>
           </div>
+
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+            className="text-2xl leading-none text-slate-400 hover:text-slate-600"
           >
             ✕
           </button>
         </div>
 
-        {isLoading && <p className="text-sm text-slate-500">Loading data...</p>}
+        {isLoading && <p className="text-sm text-slate-500">Loading request data...</p>}
 
         {!isLoading && errorMsg && (
-          <p className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {errorMsg}
           </p>
         )}
 
         {!isLoading && !errorMsg && result && (
-          <div>
-            {result.type === 'text' && (
-              <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
-                <pre className="text-sm text-slate-800 whitespace-pre-wrap break-words font-sans">
-                  {result.value ?? '(empty)'}
-                </pre>
-              </div>
-            )}
-
-            {result.type === 'file' && result.url && (
-              <div>
-                <FileFrame signedUrl={result.url} title={itemLabel} />
-                {result.urlExpiresAt && (
-                  <p className="mt-2 text-xs text-slate-400">
-                    Link expires at {new Date(result.urlExpiresAt).toLocaleTimeString()}
+          <div className="space-y-5">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="grid gap-3 text-sm md:grid-cols-3">
+                <div>
+                  <p className="text-xs text-slate-500">Viewed</p>
+                  <p className="mt-1 text-slate-800">
+                    {new Date(result.viewedAt).toLocaleString()}
                   </p>
-                )}
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-500">Granted</p>
+                  <p className="mt-1 text-slate-800">
+                    {new Date(result.grantedAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-500">Expires</p>
+                  <p className="mt-1 text-slate-800">
+                    {new Date(result.expiryDate).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+
+            {result.categories.map((category) => (
+              <section
+                key={category.name}
+                className="rounded-xl border border-slate-200 bg-white p-4"
+              >
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                  {category.name}
+                </h3>
+
+                <div className="space-y-3">
+                  {category.items.map((item) => (
+                    <div
+                      key={item.permissionId}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">
+                            {item.label}
+                          </p>
+
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            {item.type === 'file' ? 'File item' : 'Text item'}
+                            {item.isCustom ? ' · Custom' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {item.type === 'text' && (
+                        <pre className="whitespace-pre-wrap break-words rounded-md bg-white px-3 py-2 font-sans text-sm text-slate-800">
+                          {item.value ?? '(empty)'}
+                        </pre>
+                      )}
+
+                      {item.type === 'file' && (
+                        <div className="rounded-md bg-white px-3 py-2">
+                          {item.url ? (
+                            <div>
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
+                              >
+                                Open file
+                              </a>
+
+                              {item.urlExpiresAt && (
+                                <p className="mt-2 text-xs text-slate-400">
+                                  Link expires at{' '}
+                                  {new Date(item.urlExpiresAt).toLocaleTimeString()}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-slate-500">
+                              No file link is available.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </div>

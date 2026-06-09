@@ -11,9 +11,10 @@ import AccessViewModal from './AccessViewModal';
 const PAGE_SIZE = 6;
 
 interface ViewTarget {
-  permissionId: string;
-  label: string;
-  type: 'text' | 'file';
+  requestId: string;
+  workerName: string;
+  workerEmail: string;
+  reason: string;
 }
 
 export default function MyAccessTab() {
@@ -52,6 +53,7 @@ export default function MyAccessTab() {
         setIsLoading(false);
       }
     }
+
     load();
   }, [router]);
 
@@ -62,6 +64,7 @@ export default function MyAccessTab() {
   const filteredAccessList = useMemo(() => {
     const search = searchText.trim().toLowerCase();
     if (!search) return accessList;
+
     return accessList.filter(
       (a) =>
         a.workerName.toLowerCase().includes(search) ||
@@ -77,6 +80,7 @@ export default function MyAccessTab() {
 
   if (isLoading) return <p className="text-sm text-gray-500">Loading active access...</p>;
   if (errorMsg) return <p className="text-sm text-red-500">{errorMsg}</p>;
+
   if (accessList.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
@@ -90,7 +94,8 @@ export default function MyAccessTab() {
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900">My Access</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Worker data your company is currently approved to access. Click View to fetch and display the value.
+          Worker data your company is currently approved to access. Click View Request Data to
+          view all approved items under one request.
         </p>
       </div>
 
@@ -115,35 +120,55 @@ export default function MyAccessTab() {
             {paginatedAccessList.map((a) => (
               <div
                 key={a.requestId}
-                className="rounded-xl border border-gray-200 bg-white p-4 space-y-4"
+                className="space-y-4 rounded-xl border border-gray-200 bg-white p-4"
               >
-                <div className="grid gap-3 md:grid-cols-[1.5fr_2fr_8rem_8rem]">
+                <div className="grid gap-3 md:grid-cols-[1.5fr_2fr_8rem_8rem_10rem]">
                   <div>
                     <p className="text-sm text-gray-500">Worker</p>
                     <p className="mt-1 font-medium text-gray-900">{a.workerName}</p>
                     <p className="mt-1 text-xs text-gray-500">{a.workerEmail}</p>
                   </div>
+
                   <div>
                     <p className="text-sm text-gray-500">Reason</p>
                     <p className="mt-1 text-sm text-gray-700">{a.reason}</p>
                   </div>
+
                   <div>
                     <p className="text-sm text-gray-500">Granted</p>
                     <p className="mt-1 text-sm text-gray-600">
                       {new Date(a.grantedAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="md:text-right">
+
+                  <div>
                     <p className="text-sm text-gray-500">Expires</p>
                     <p className="mt-1 text-sm text-gray-600">
                       {new Date(a.expiryDate).toLocaleDateString()}
                     </p>
                   </div>
+
+                  <div className="md:text-right">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setViewTarget({
+                          requestId: a.requestId,
+                          workerName: a.workerName,
+                          workerEmail: a.workerEmail,
+                          reason: a.reason,
+                        })
+                      }
+                      className="rounded-md bg-slate-800 px-3 py-2 text-xs font-medium text-white hover:bg-slate-700"
+                    >
+                      View Request Data
+                    </button>
+                  </div>
                 </div>
 
                 {a.categories.map((cat) => (
                   <div key={cat.name}>
-                    <p className="text-sm font-semibold text-slate-800 mb-2">{cat.name}</p>
+                    <p className="mb-2 text-sm font-semibold text-slate-800">{cat.name}</p>
                     <div className="space-y-1.5">
                       {cat.items.map((item) => (
                         <div
@@ -159,19 +184,10 @@ export default function MyAccessTab() {
                               <span className="ml-1 text-xs text-slate-400">(custom)</span>
                             )}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setViewTarget({
-                                permissionId: item.permissionId,
-                                label: item.label,
-                                type: item.type,
-                              })
-                            }
-                            className="rounded-md bg-slate-800 px-3 py-1 text-xs font-medium text-white hover:bg-slate-700"
-                          >
-                            View
-                          </button>
+
+                          <span className="text-xs text-slate-400">
+                            Included in request
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -190,6 +206,7 @@ export default function MyAccessTab() {
               {filteredAccessList.length}
               {' access records'}
             </p>
+
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -199,9 +216,11 @@ export default function MyAccessTab() {
               >
                 Previous
               </button>
+
               <span className="text-sm text-gray-600">
                 Page {currentPage} of {totalPages}
               </span>
+
               <button
                 type="button"
                 disabled={currentPage === totalPages}
@@ -217,9 +236,10 @@ export default function MyAccessTab() {
 
       {viewTarget && (
         <AccessViewModal
-          permissionId={viewTarget.permissionId}
-          itemLabel={viewTarget.label}
-          itemType={viewTarget.type}
+          requestId={viewTarget.requestId}
+          workerName={viewTarget.workerName}
+          workerEmail={viewTarget.workerEmail}
+          reason={viewTarget.reason}
           onClose={() => setViewTarget(null)}
         />
       )}

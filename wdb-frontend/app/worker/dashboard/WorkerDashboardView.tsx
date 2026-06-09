@@ -282,7 +282,7 @@ export default function WorkerDashboardView({
                       <p className="font-medium text-slate-900">
                         {record.actionLabel}
                       </p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
                         {record.userMessage}
                       </p>
                     </div>

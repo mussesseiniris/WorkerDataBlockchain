@@ -50,14 +50,15 @@ public class EmployerActiveAccessController : ControllerBase
     }
 
     /// <summary>
-    /// View the value of a single approved permission.
-    /// Text values are returned inline; file values are returned as a short-lived
-    /// Supabase signed URL the client can use to render the file directly.
+    /// View all approved data under one request.
+    /// Text values are returned inline.
+    /// File values are returned as short-lived Supabase signed URLs.
+    /// This action is recorded once on blockchain as a request-level DataViewed event.
     /// </summary>
     [Authorize]
-    [HttpGet("{permissionId}/view")]
-    public async Task<ActionResult<EmployerAccessViewResultDto>> View(
-        Guid permissionId,
+    [HttpGet("{requestId}/view")]
+    public async Task<ActionResult<EmployerRequestAccessViewDto>> ViewRequest(
+        Guid requestId,
         CancellationToken cancellationToken)
     {
         var employerId = GetCurrentEmployerId();
@@ -65,13 +66,16 @@ public class EmployerActiveAccessController : ControllerBase
 
         try
         {
-            var result = await _employerActiveAccessService.ViewAsync(
-                employerId.Value, permissionId, cancellationToken);
+            var result = await _employerActiveAccessService.ViewRequestAsync(
+                employerId.Value,
+                requestId,
+                cancellationToken);
+
             return Ok(result);
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new { error = "PERMISSION_NOT_FOUND" });
+            return NotFound(new { error = "REQUEST_NOT_FOUND" });
         }
         catch (UnauthorizedAccessException)
         {
@@ -80,6 +84,13 @@ public class EmployerActiveAccessController : ControllerBase
         catch (InvalidOperationException ex) when (ex.Message.Contains("Supabase storage configuration"))
         {
             return StatusCode(503, new { error = "STORAGE_UNAVAILABLE", message = ex.Message });
+        }
+        catch (InvalidOperationException ex) when (
+            ex.Message.Contains("BLOCKCHAIN") ||
+            ex.Message.Contains("Private key") ||
+            ex.Message.Contains("blockchain", StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusCode(503, new { error = "BLOCKCHAIN_LOG_FAILED", message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

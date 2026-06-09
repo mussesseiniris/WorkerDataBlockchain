@@ -45,14 +45,14 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
             .Include(c => c.Fields)
             .ToListAsync(cancellationToken);
 
-        // Worker's custom items live under the OtherInformation category by convention.
+        // Worker's custom items live under the OtherInformation category by convention;
+        // they are identified by having a non-null custom_label.
         var customItems = await _context.WorkerInfos
             .AsNoTracking()
             .Where(wi => wi.WorkerId == worker.Id && wi.CustomLabel != null)
             .ToListAsync(cancellationToken);
 
-        var otherCategory = categories
-            .FirstOrDefault(c => c.CategoryName == "OtherInformation");
+        var otherCategory = categories.FirstOrDefault(c => c.CategoryName == "OtherInformation");
 
         return new EmployerRequestCatalogDto
         {
@@ -75,7 +75,7 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
                         AllowedType = f.AllowedType
                     })
                     .ToList(),
-                CustomItems = otherCategory != null && c.Id == otherCategory.Id
+                CustomItems = (otherCategory != null && c.Id == otherCategory.Id)
                     ? customItems.Select(wi => new EmployerRequestCatalogCustomItemDto
                     {
                         WorkerInfoId = wi.Id,
@@ -92,28 +92,13 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
         CreateEmployerRequestDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(dto.WorkerEmail))
-        {
-            throw new ArgumentException("Worker email is required");
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Reason))
-        {
-            throw new ArgumentException("Reason is required");
-        }
-
-        var employer = await _context.Employers
-            .FirstOrDefaultAsync(e => e.Id == employerId, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Current user is not an employer.");
-
         var worker = await _context.Workers
             .FirstOrDefaultAsync(w => w.Email == dto.WorkerEmail, cancellationToken)
             ?? throw new KeyNotFoundException($"Worker {dto.WorkerEmail} not found");
 
-        var hasAnyItem =
-            dto.PresetFieldIds.Count > 0 ||
-            dto.CustomWorkerInfoIds.Count > 0 ||
-            !string.IsNullOrWhiteSpace(dto.CustomRequest);
+        var hasAnyItem = dto.PresetFieldIds.Count > 0
+                         || dto.CustomWorkerInfoIds.Count > 0
+                         || !string.IsNullOrWhiteSpace(dto.CustomRequest);
 
         if (!hasAnyItem)
         {
@@ -127,24 +112,21 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
         {
             EmployerId = employerId,
             WorkerId = worker.Id,
-            Reason = dto.Reason.Trim(),
-
-            // Employer does not set expiry date.
-            // Worker sets this during approval.
+            Reason = dto.Reason,
+            // Expiry is set later by the worker during approval.
             ExpiryDate = null,
-
-            CustomRequest = hasCustomRequest ? dto.CustomRequest!.Trim() : null,
+            CustomRequest = hasCustomRequest ? dto.CustomRequest : null,
             CustomRequestStatus = hasCustomRequest ? "pending" : null
         };
 
         _context.Requests.Add(request);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var createdPermissions = new List<Permission>();
-
+        // Preset fields: permission references the field definition; info_id stays null
+        // until the worker approves and an actual worker_info row is associated.
         foreach (var fieldId in dto.PresetFieldIds.Distinct())
         {
-            var permission = new Permission
+            _context.Permissions.Add(new Permission
             {
                 RequestId = request.Id,
                 WorkerId = worker.Id,
@@ -152,15 +134,13 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
                 InfoId = null,
                 Status = PermissionStatus.Pending,
                 LastUpdatedAt = DateTime.UtcNow
-            };
-
-            _context.Permissions.Add(permission);
-            createdPermissions.Add(permission);
+            });
         }
 
+        // Existing custom items: permission points directly at the worker_info row.
         foreach (var workerInfoId in dto.CustomWorkerInfoIds.Distinct())
         {
-            var permission = new Permission
+            _context.Permissions.Add(new Permission
             {
                 RequestId = request.Id,
                 WorkerId = worker.Id,
@@ -168,10 +148,7 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
                 InfoId = workerInfoId,
                 Status = PermissionStatus.Pending,
                 LastUpdatedAt = DateTime.UtcNow
-            };
-
-            _context.Permissions.Add(permission);
-            createdPermissions.Add(permission);
+            });
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -186,24 +163,32 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
             cancellationToken);
 
         await LogRequestCreatedToBlockchainAsync(
-            employer,
-            worker,
-            request,
-            createdPermissions,
+            employerId,
+            worker.Id,
+            request.Id,
             cancellationToken);
 
         return new CreateEmployerRequestResultDto { RequestId = request.Id };
     }
 
     private async Task LogRequestCreatedToBlockchainAsync(
-        Employer employer,
-        Worker worker,
-        Request request,
-        List<Permission> createdPermissions,
+        Guid employerId,
+        Guid workerId,
+        Guid requestId,
         CancellationToken cancellationToken)
     {
         try
         {
+            var employer = await _context.Employers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == employerId, cancellationToken)
+                ?? throw new KeyNotFoundException("EMPLOYER_NOT_FOUND_FOR_BLOCKCHAIN_LOG");
+
+            var worker = await _context.Workers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == workerId, cancellationToken)
+                ?? throw new KeyNotFoundException("WORKER_NOT_FOUND_FOR_BLOCKCHAIN_LOG");
+
             if (string.IsNullOrWhiteSpace(employer.PrivateKey))
                 throw new InvalidOperationException("EMPLOYER_PRIVATE_KEY_MISSING");
 
@@ -213,28 +198,43 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
             if (string.IsNullOrWhiteSpace(worker.BlockchainAddress))
                 throw new InvalidOperationException("WORKER_BLOCKCHAIN_ADDRESS_MISSING");
 
+            var dataRequest = await _context.Requests
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == requestId, cancellationToken)
+                ?? throw new KeyNotFoundException("REQUEST_NOT_FOUND_FOR_BLOCKCHAIN_LOG");
+
+            var permissionsToLog = await _context.Permissions
+                .AsNoTracking()
+                .Where(p => p.RequestId == requestId)
+                .Include(p => p.Field)
+                    .ThenInclude(f => f!.Category)
+                .Include(p => p.WorkerInfo)
+                    .ThenInclude(wi => wi!.Field)
+                        .ThenInclude(f => f!.Category)
+                .ToListAsync(cancellationToken);
+
             var permissionIds = string.Join(
                 ",",
-                createdPermissions
-                    .OrderBy(p => p.Id)
+                permissionsToLog
+                    .OrderBy(ResolveCategory)
+                    .ThenBy(ResolveLabel)
                     .Select(p => p.Id.ToString()));
 
-            var requestSummary = await BuildRequestCreatedSummaryAsync(
-                request,
-                createdPermissions,
-                cancellationToken);
+            var requestSummary = BuildRequestCreatedSummary(
+                permissionsToLog,
+                dataRequest.CustomRequest);
 
             _logger.LogWarning(
-                "Writing request-created blockchain log. RequestId={RequestId}, PermissionCount={PermissionCount}, Summary={Summary}",
-                request.Id,
-                createdPermissions.Count,
+                "Writing request-level creation blockchain log. RequestId={RequestId}, PermissionCount={PermissionCount}, Summary={Summary}",
+                requestId,
+                permissionsToLog.Count,
                 requestSummary);
 
             var txHash = await _blockchainService.LogCategoryTransactionAsync(
                 privateKey: employer.PrivateKey!,
                 employerAddress: employer.BlockchainAddress!,
                 workerAddress: worker.BlockchainAddress!,
-                requestId: request.Id.ToString(),
+                requestId: requestId.ToString(),
                 category: "RequestCreated",
                 permissionIds: permissionIds,
                 itemLabels: requestSummary,
@@ -242,90 +242,65 @@ public class EmployerRequestServiceImpl : IEmployerRequestService
                 cancellationToken: cancellationToken);
 
             _logger.LogWarning(
-                "Request-created blockchain log written successfully. RequestId={RequestId}, TxHash={TxHash}",
-                request.Id,
+                "Request-level creation blockchain log written successfully. RequestId={RequestId}, TxHash={TxHash}",
+                requestId,
                 txHash);
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            // Keep request creation working even if the local blockchain is unavailable.
+            // The database request and worker notification should still succeed.
+            _logger.LogWarning(
                 ex,
                 "REQUEST CREATED BLOCKCHAIN LOG FAILED. RequestId={RequestId}, Error={ErrorMessage}",
-                request.Id,
+                requestId,
                 ex.Message);
-
-            // During testing/demo, throw so missing blockchain records are visible.
-            // If the team later wants request creation to succeed even when blockchain
-            // is unavailable, change this to return instead of throw.
-            throw;
         }
     }
 
-    private async Task<string> BuildRequestCreatedSummaryAsync(
-        Request request,
+    private static string BuildRequestCreatedSummary(
         List<Permission> permissions,
-        CancellationToken cancellationToken)
+        string? customRequest)
     {
-        var fieldIds = permissions
-            .Where(p => p.FieldId.HasValue)
-            .Select(p => p.FieldId!.Value)
-            .Distinct()
-            .ToList();
-
-        var workerInfoIds = permissions
-            .Where(p => p.InfoId.HasValue)
-            .Select(p => p.InfoId!.Value)
-            .Distinct()
-            .ToList();
-
-        var fieldRows = await _context.Fields
-            .AsNoTracking()
-            .Where(f => fieldIds.Contains(f.Id))
-            .Include(f => f.Category)
-            .ToListAsync(cancellationToken);
-
-        var workerInfoRows = await _context.WorkerInfos
-            .AsNoTracking()
-            .Where(wi => workerInfoIds.Contains(wi.Id))
-            .Include(wi => wi.Field)
-                .ThenInclude(f => f!.Category)
-            .ToListAsync(cancellationToken);
-
         var sections = new List<string>();
 
-        var presetGroups = fieldRows
-            .GroupBy(f => f.Category?.CategoryName ?? "OtherInformation")
+        var requestedGroups = permissions
+            .GroupBy(ResolveCategory)
             .OrderBy(g => g.Key)
             .ToList();
 
-        if (presetGroups.Any())
+        if (requestedGroups.Any())
         {
-            var presetText = string.Join(
+            var requestedText = string.Join(
                 "; ",
-                presetGroups.Select(g =>
-                    $"{g.Key}: {string.Join(", ", g.OrderBy(f => f.Label).Select(f => f.Label))}"));
+                requestedGroups.Select(g =>
+                    $"{g.Key}: {string.Join(", ", g.OrderBy(ResolveLabel).Select(ResolveLabel))}"));
 
-            sections.Add($"REQUESTED_PRESET | {presetText}");
+            sections.Add($"REQUESTED | {requestedText}");
         }
 
-        var customItemLabels = workerInfoRows
-            .Select(wi => wi.CustomLabel ?? wi.Field?.Label ?? "Unknown")
-            .Where(label => !string.IsNullOrWhiteSpace(label))
-            .OrderBy(label => label)
-            .ToList();
-
-        if (customItemLabels.Any())
+        if (!string.IsNullOrWhiteSpace(customRequest))
         {
-            sections.Add($"REQUESTED_EXISTING_CUSTOM | {string.Join(", ", customItemLabels)}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.CustomRequest))
-        {
-            sections.Add($"REQUESTED_NEW_CUSTOM | {request.CustomRequest}");
+            sections.Add($"CUSTOM_REQUEST | pending: {customRequest.Trim()}");
         }
 
         return sections.Any()
             ? string.Join(" || ", sections)
-            : "REQUEST_CREATED | No requested items were attached.";
+            : "No requested items were attached to this request.";
+    }
+
+    private static string ResolveLabel(Permission permission)
+    {
+        return permission.Field?.Label
+            ?? permission.WorkerInfo?.Field?.Label
+            ?? permission.WorkerInfo?.CustomLabel
+            ?? "Unknown";
+    }
+
+    private static string ResolveCategory(Permission permission)
+    {
+        return permission.Field?.Category?.CategoryName
+            ?? permission.WorkerInfo?.Field?.Category?.CategoryName
+            ?? "OtherInformation";
     }
 }
