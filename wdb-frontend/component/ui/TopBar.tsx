@@ -164,7 +164,7 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                                     <span className="mt-1.5 w-2 h-2 flex-shrink-0 rounded-full bg-red-500" />
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-medium text-gray-800 leading-snug">
-                                                            [{n.notificationType}]
+                                                            [{n.notificationType}] {n.employerName}
                                                             {n.workerInfoDesc ? ` — ${n.workerInfoDesc}` : ''}
                                                         </p>
                                                         <p className="text-xs text-gray-400 mt-0.5">

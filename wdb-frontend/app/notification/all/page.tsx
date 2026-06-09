@@ -96,7 +96,7 @@ export default function AllNotificationsPage() {
                             >
                                 <span className="w-2.5 h-2.5 flex-shrink-0 rounded-full bg-red-500" />
                                 <p className="flex-1 text-sm font-medium text-gray-800">
-                                    [{n.notificationType}] {n.employerName} — [{n.workerInfoDesc}]
+                                    [{n.notificationType}] {n.employerName}{n.workerInfoDesc ? ` — ${n.workerInfoDesc}` : ''}
                                 </p>
                                 <p className="text-xs text-gray-400 whitespace-nowrap">{formatTime(n.notificationTime)}</p>
                             </li>
@@ -117,7 +117,7 @@ export default function AllNotificationsPage() {
                             <li key={n.id} className="flex items-center gap-4 px-5 py-4 bg-gray-50 border border-gray-100 rounded-xl">
                                 <span className="w-2.5 h-2.5 flex-shrink-0 rounded-full bg-gray-300" />
                                 <p className="flex-1 text-sm text-gray-400">
-                                    [{n.notificationType}] {n.employerName} — [{n.workerInfoDesc}]
+                                    [{n.notificationType}] {n.employerName}{n.workerInfoDesc ? ` — ${n.workerInfoDesc}` : ''}
                                 </p>
                                 <p className="text-xs text-gray-300 whitespace-nowrap">{formatTime(n.notificationTime)}</p>
                             </li>

@@ -100,6 +100,7 @@ public class NotificationRepoImpl : INotificationRepository
             select new
             {
                 n.Id,
+                n.RequestId,
                 EmployerName = (string?)emp.Name,
                 WorkerName = (string?)null,
                 n.Type,
@@ -107,12 +108,21 @@ public class NotificationRepoImpl : INotificationRepository
             }
         ).ToListAsync(ct);
 
+        var requestIds = rows
+            .Where(r => r.RequestId.HasValue)
+            .Select(r => r.RequestId!.Value)
+            .Distinct()
+            .ToList();
+        var descByRequest = await GetCategoryFieldsByRequestIdAsync(requestIds, ct);
+
         return rows.Select(r => new NotificationFormatComponent(
             r.Id,
             r.EmployerName,
             r.WorkerName,
             r.Type,
-            null,
+            r.RequestId.HasValue && descByRequest.TryGetValue(r.RequestId.Value, out var desc)
+                ? desc
+                : null,
             r.CreatedAt
         )).ToList();
     }
@@ -168,6 +178,7 @@ public class NotificationRepoImpl : INotificationRepository
             select new
             {
                 n.Id,
+                n.RequestId,
                 EmployerName = (string?)emp.Name,
                 WorkerName = (string?)worker.Name,
                 n.Type,
@@ -175,14 +186,81 @@ public class NotificationRepoImpl : INotificationRepository
             }
         ).ToListAsync(ct);
 
+        var requestIds = rows
+            .Where(r => r.RequestId.HasValue)
+            .Select(r => r.RequestId!.Value)
+            .Distinct()
+            .ToList();
+        var descByRequest = await GetCategoryFieldsByRequestIdAsync(requestIds, ct);
+
         return rows.Select(r => new NotificationFormatComponent(
             r.Id,
             r.EmployerName,
             r.WorkerName,
             r.Type,
-            null,
+            r.RequestId.HasValue && descByRequest.TryGetValue(r.RequestId.Value, out var desc)
+                ? desc
+                : null,
             r.CreatedAt
         )).ToList();
+    }
+
+    /// <summary>
+    /// For each requestId, build a display string of categories with their fields,
+    /// e.g. "Personal Information (Phone, Address), Medical Information (Vaccination Records)".
+    /// Returns an empty dictionary when no input.
+    /// </summary>
+    private async Task<Dictionary<Guid, string>> GetCategoryFieldsByRequestIdAsync(
+        List<Guid> requestIds,
+        CancellationToken ct)
+    {
+        if (requestIds.Count == 0) return new Dictionary<Guid, string>();
+
+        var permissions = await _dbContext.Permissions
+            .AsNoTracking()
+            .Where(p => requestIds.Contains(p.RequestId))
+            .Include(p => p.Field).ThenInclude(f => f!.Category)
+            .Include(p => p.WorkerInfo).ThenInclude(wi => wi!.Field).ThenInclude(f => f!.Category)
+            .ToListAsync(ct);
+
+        return permissions
+            .GroupBy(p => p.RequestId)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var byCategory = g
+                        .Select(p => new
+                        {
+                            Category = p.Field?.Category?.CategoryName
+                                       ?? p.WorkerInfo?.Field?.Category?.CategoryName
+                                       ?? "OtherInformation",
+                            Label = p.Field?.Label
+                                    ?? p.WorkerInfo?.CustomLabel
+                                    ?? p.WorkerInfo?.Field?.Label
+                                    ?? "Unknown"
+                        })
+                        .GroupBy(x => x.Category);
+
+                    return string.Join(", ",
+                        byCategory.Select(cg =>
+                            $"{HumanizeCategoryName(cg.Key)} ({string.Join(", ", cg.Select(x => x.Label).Distinct())})"));
+                });
+    }
+
+    /// <summary>
+    /// Convert a PascalCase category name like "PersonalInformation" to "Personal Information".
+    /// </summary>
+    private static string HumanizeCategoryName(string camelCase)
+    {
+        if (string.IsNullOrEmpty(camelCase)) return camelCase;
+        var sb = new System.Text.StringBuilder(camelCase.Length + 4);
+        for (int i = 0; i < camelCase.Length; i++)
+        {
+            if (i > 0 && char.IsUpper(camelCase[i])) sb.Append(' ');
+            sb.Append(camelCase[i]);
+        }
+        return sb.ToString();
     }
 
     // ── Existing formatting helpers ────────────────────────────────────────
