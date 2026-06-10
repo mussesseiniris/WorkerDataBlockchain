@@ -279,11 +279,22 @@ public class NotificationRepoImpl : INotificationRepository
         var workerName = (await _dbContext.Workers
             .FirstOrDefaultAsync(w => w.Id == e.WorkerId, ct))?.Name;
 
+        // Prefer explicit FieldLabel from the event; otherwise derive a
+        // category-fields description from the request so the live push has
+        // meaningful content (matches the bell/list rendering).
+        string? desc = e.FieldLabel;
+        if (string.IsNullOrEmpty(desc) && e.RequestId.HasValue)
+        {
+            var descMap = await GetCategoryFieldsByRequestIdAsync(
+                new List<Guid> { e.RequestId.Value }, ct);
+            descMap.TryGetValue(e.RequestId.Value, out desc);
+        }
+
         return new NotificationFormat(
             employerName,
             workerName,
             e.Type.ToString(),
-            e.FieldLabel,
+            desc,
             e.CreateAt
         );
     }

@@ -34,11 +34,14 @@ public class NotificationClientsHandler : INotificationHandler<NotificationEvent
         }, ct);
 
         // Format and push to the worker's SignalR group.
+        // Toast text mirrors the bell/list rendering so users see consistent content.
         var format = await _notificationRepo.FormatNotification(e, ct);
+        var descSuffix = string.IsNullOrEmpty(format.WorkInfoDesc)
+            ? string.Empty
+            : $" — {format.WorkInfoDesc}";
+        var message = $"[{format.NotificationType}] {format.EmployerName}{descSuffix}";
         await _hubContext.Clients
             .Group(e.WorkerId.ToString())
-            .SendAsync("NotificationInfo",
-                $"{format.EmployerName} {format.NotificationType.ToLower()}ed your {format.WorkInfoDesc} at {format.NotificationTime}",
-                ct);
+            .SendAsync("NotificationInfo", message, ct);
     }
 }
