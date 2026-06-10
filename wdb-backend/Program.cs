@@ -77,8 +77,18 @@ builder.Services.AddScoped<IEmployerDashboardService, EmployerDashboardServiceIm
 // Blockchain service
 builder.Services.AddSingleton<IBlockchainService, BlockchainService>();
 
-// Supabase storage (signed URL generation for private file objects)
-builder.Services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>();
+// Object storage — pick implementation by config.
+// Storage:Provider = "Supabase" (default, REST API) or "AzureBlob" (Azure SDK).
+// Interface name kept as ISupabaseStorageService to avoid sprawling renames.
+var storageProvider = builder.Configuration["Storage:Provider"] ?? "Supabase";
+if (storageProvider.Equals("AzureBlob", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<ISupabaseStorageService, AzureBlobStorageService>();
+}
+else
+{
+    builder.Services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>();
+}
 
 // On-chain audit logging (best-effort: swallows failures so the chain never blocks business actions)
 builder.Services.AddScoped<IBlockchainAuditService, BlockchainAuditService>();
