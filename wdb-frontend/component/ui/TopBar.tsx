@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Bell, ShieldCheck, ChevronRight, LogOut, ArrowLeft } from 'lucide-react'
+import { User, Bell, ShieldCheck, ChevronRight, ChevronDown, ChevronUp, LogOut, ArrowLeft } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -189,9 +189,10 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                                             {couldTruncate && (
                                                                 <button
                                                                     onClick={(e) => toggleExpand(n.id, e)}
-                                                                    className="text-xs text-blue-500 hover:text-blue-700"
+                                                                    className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
                                                                 >
                                                                     {isExpanded ? 'Show less' : 'Show more'}
+                                                                    {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -206,9 +207,10 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                         <Link
                                             href="/notification/all"
                                             onClick={() => setOpen(false)}
-                                            className="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                                            className="flex items-center justify-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 py-2 rounded-md transition-colors"
                                         >
-                                            View all notifications →
+                                            View all notifications
+                                            <ChevronRight size={12} />
                                         </Link>
                                     </div>
                                 </div>
