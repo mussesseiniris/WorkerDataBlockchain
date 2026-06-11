@@ -24,6 +24,17 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
     const [open, setOpen] = useState(false)
     const [messagesHovered, setMessagesHovered] = useState(false)
     const [notifications, setNotifications] = useState<NotificationFormat[]>([])
+    // Track which notifications have their description expanded (per-row).
+    const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+    function toggleExpand(id: string, e: React.MouseEvent) {
+        e.stopPropagation()
+        setExpanded(prev => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id); else next.add(id)
+            return next
+        })
+    }
     const dropdownRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
     const { userId, token, isAuthReady, logout } = useAuth()
@@ -151,6 +162,9 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                         ) : (
                                             notifications.map(n => {
                                                 const typeStyle = getTypeStyle(n.notificationType)
+                                                const isExpanded = expanded.has(n.id)
+                                                // ~75 chars roughly fills 2 narrow lines; below this it won't truncate so skip the button.
+                                                const couldTruncate = (n.workerInfoDesc?.length ?? 0) > 75
                                                 return (
                                                 <div
                                                     key={n.id}
@@ -164,9 +178,17 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                                             {n.employerName ? ` · ${n.employerName}` : ''}
                                                         </p>
                                                         {n.workerInfoDesc && (
-                                                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                                            <p className={`text-xs text-gray-500 mt-0.5 ${isExpanded ? '' : 'line-clamp-2'}`}>
                                                                 {n.workerInfoDesc}
                                                             </p>
+                                                        )}
+                                                        {couldTruncate && (
+                                                            <button
+                                                                onClick={(e) => toggleExpand(n.id, e)}
+                                                                className="text-xs text-blue-500 hover:text-blue-700 mt-0.5"
+                                                            >
+                                                                {isExpanded ? 'Show less' : 'Show more'}
+                                                            </button>
                                                         )}
                                                         <p className="text-xs text-gray-400 mt-0.5">
                                                             {formatRelativeTime(n.notificationTime)}
