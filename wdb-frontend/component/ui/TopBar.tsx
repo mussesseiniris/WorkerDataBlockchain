@@ -182,17 +182,19 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                                                                 {n.workerInfoDesc}
                                                             </p>
                                                         )}
-                                                        {couldTruncate && (
-                                                            <button
-                                                                onClick={(e) => toggleExpand(n.id, e)}
-                                                                className="text-xs text-blue-500 hover:text-blue-700 mt-0.5"
-                                                            >
-                                                                {isExpanded ? 'Show less' : 'Show more'}
-                                                            </button>
-                                                        )}
-                                                        <p className="text-xs text-gray-400 mt-0.5">
-                                                            {formatRelativeTime(n.notificationTime)}
-                                                        </p>
+                                                        <div className="flex items-center justify-between mt-0.5">
+                                                            <p className="text-xs text-gray-400">
+                                                                {formatRelativeTime(n.notificationTime)}
+                                                            </p>
+                                                            {couldTruncate && (
+                                                                <button
+                                                                    onClick={(e) => toggleExpand(n.id, e)}
+                                                                    className="text-xs text-blue-500 hover:text-blue-700"
+                                                                >
+                                                                    {isExpanded ? 'Show less' : 'Show more'}
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 )
