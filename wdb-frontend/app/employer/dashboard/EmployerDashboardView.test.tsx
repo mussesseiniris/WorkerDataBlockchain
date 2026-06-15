@@ -10,9 +10,8 @@ const mockDashboardData: EmployerDashboardData = {
   },
   summary: {
     pendingRequests: 2,
-    partiallyApprovedRequests: 1,
-    approvedRequests: 1,
-    activeAccessCount: 1,
+    reviewedRequests: 3,
+    totalRequests: 5,
   },
   recentRequests: [
     {
@@ -26,7 +25,13 @@ const mockDashboardData: EmployerDashboardData = {
     {
       requestId: 'request-2',
       workerName: 'Luca',
-      requestedFields: ['Training Status'],
+      requestedFields: [
+        'Training Status',
+        'PPE Requirement',
+        'Emergency Contact',
+        'Medical Notes',
+        'Address',
+      ],
       reason: 'Project qualification',
       status: 'Approved',
       lastUpdatedAt: '2026-04-28T10:20:00.000Z',
@@ -44,7 +49,7 @@ const mockDashboardData: EmployerDashboardData = {
       workerName: 'Jason',
       requestedFields: ['PPE Requirement'],
       reason: 'Site safety check',
-      status: 'Rejected',
+      status: 'Revoked',
       lastUpdatedAt: '2026-04-26T10:20:00.000Z',
     },
   ],
@@ -68,49 +73,49 @@ describe('EmployerDashboardView', () => {
     expect(screen.getByText('Not verified')).toBeInTheDocument();
   });
 
-  it('renders request summary cards', () => {
+  it('renders simplified request summary cards', () => {
     render(<EmployerDashboardView data={mockDashboardData} />);
 
     expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Partially Approved').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Approved').length).toBeGreaterThan(0);
-    expect(screen.getByText('Active Access')).toBeInTheDocument();
+    expect(screen.getAllByText('Reviewed').length).toBeGreaterThan(0);
+    expect(screen.getByText('Total Requests')).toBeInTheDocument();
 
     expect(screen.getByText('2')).toBeInTheDocument();
-    // Three summary cards show "1": partiallyApproved, approved, activeAccess.
-    expect(screen.getAllByText('1')).toHaveLength(3);
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+
+    expect(screen.queryByText('Partially Approved')).not.toBeInTheDocument();
+    expect(screen.queryByText('Approved')).not.toBeInTheDocument();
+    expect(screen.queryByText('Active Access')).not.toBeInTheDocument();
   });
 
-  it('renders recent access request details', () => {
+  it('renders recent access request details with field preview', () => {
     render(<EmployerDashboardView data={mockDashboardData} />);
 
     expect(screen.getByText('Recent Access Requests')).toBeInTheDocument();
+    expect(screen.getByText('View all requests')).toBeInTheDocument();
 
     expect(screen.getByText('Will')).toBeInTheDocument();
     expect(screen.getByText('Phone, Address')).toBeInTheDocument();
     expect(screen.getByText('Safety compliance check')).toBeInTheDocument();
 
     expect(screen.getByText('Luca')).toBeInTheDocument();
-    expect(screen.getByText('Training Status')).toBeInTheDocument();
+    expect(
+      screen.getByText('Training Status, PPE Requirement, Emergency Contact +2 more')
+    ).toBeInTheDocument();
     expect(screen.getByText('Project qualification')).toBeInTheDocument();
-
-    expect(screen.getByText('Alyanna')).toBeInTheDocument();
-    expect(screen.getByText('Emergency Contact')).toBeInTheDocument();
-    expect(screen.getByText('Emergency preparedness')).toBeInTheDocument();
-
-    expect(screen.getByText('Jason')).toBeInTheDocument();
-    expect(screen.getByText('PPE Requirement')).toBeInTheDocument();
-    expect(screen.getByText('Site safety check')).toBeInTheDocument();
   });
 
-  it('renders all supported request statuses', () => {
+  it('shows only Pending, Reviewed, and Revoked status labels on dashboard', () => {
     render(<EmployerDashboardView data={mockDashboardData} />);
 
-    // Status badges are formatted from PascalCase to spaced words.
     expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Approved').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Partially Approved').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Rejected').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Reviewed').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Revoked').length).toBeGreaterThan(0);
+
+    expect(screen.queryByText('Partially Approved')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rejected')).not.toBeInTheDocument();
+    expect(screen.queryByText('Approved')).not.toBeInTheDocument();
   });
 
   it('shows an empty state when there are no recent requests', () => {
@@ -122,9 +127,8 @@ describe('EmployerDashboardView', () => {
       },
       summary: {
         pendingRequests: 0,
-        partiallyApprovedRequests: 0,
-        approvedRequests: 0,
-        activeAccessCount: 0,
+        reviewedRequests: 0,
+        totalRequests: 0,
       },
       recentRequests: [],
     };

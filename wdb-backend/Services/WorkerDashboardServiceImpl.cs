@@ -65,8 +65,6 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
         Guid workerId,
         CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
-
         var pendingReviews = await _dbContext.Requests
             .AsNoTracking()
             .Where(request => request.WorkerId == workerId)
@@ -75,16 +73,6 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
                 request.CustomRequestStatus == "pending")
             .CountAsync(cancellationToken);
 
-        var activeAccess = await (
-            from permission in _dbContext.Permissions.AsNoTracking()
-            join request in _dbContext.Requests.AsNoTracking()
-                on permission.RequestId equals request.Id
-            where permission.WorkerId == workerId
-                  && permission.Status == PermissionStatus.Approved
-                  && request.ExpiryDate > now
-            select permission.Id
-        ).CountAsync(cancellationToken);
-
         var totalRequests = await _dbContext.Requests
             .AsNoTracking()
             .CountAsync(request => request.WorkerId == workerId, cancellationToken);
@@ -92,7 +80,7 @@ public class WorkerDashboardServiceImpl : IWorkerDashboardService
         return new WorkerDashboardSummaryDto
         {
             PendingReviews = pendingReviews,
-            ActiveAccess = activeAccess,
+            ReviewedRequests = totalRequests - pendingReviews,
             TotalRequests = totalRequests
         };
     }

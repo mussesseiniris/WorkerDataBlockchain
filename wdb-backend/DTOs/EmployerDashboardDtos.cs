@@ -17,11 +17,11 @@ public class EmployerCompanyInfoDto
 public class EmployerDashboardSummaryDto
 {
     public int PendingRequests { get; set; }
-    public int PartiallyApprovedRequests { get; set; }
-    public int ApprovedRequests { get; set; }
 
-    // Requests with at least one Approved permission and a non-expired request.
-    public int ActiveAccessCount { get; set; }
+    // Requests already reviewed by workers, including approved, rejected, partial, and revoked.
+    public int ReviewedRequests { get; set; }
+
+    public int TotalRequests { get; set; }
 }
 
 public class EmployerRecentRequestDto

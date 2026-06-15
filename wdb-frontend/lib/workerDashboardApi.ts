@@ -8,7 +8,7 @@ export interface WorkerDashboardResponse {
 
 export interface WorkerDashboardSummary {
   pendingReviews: number;
-  activeAccess: number;
+  reviewedRequests: number;
   totalRequests: number;
 }
 

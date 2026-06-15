@@ -6,9 +6,8 @@ export type EmployerCompanyInfo = {
 
 export type EmployerDashboardSummary = {
   pendingRequests: number;
-  partiallyApprovedRequests: number;
-  approvedRequests: number;
-  activeAccessCount: number;
+  reviewedRequests: number;
+  totalRequests: number;
 };
 
 export type EmployerRequestStatus =
@@ -62,8 +61,8 @@ export async function getEmployerDashboardMe(
   if (!response.ok || !result.success) {
     throw new Error(
       result.error?.message ||
-        result.message ||
-        'Failed to load employer dashboard.'
+      result.message ||
+      'Failed to load employer dashboard.'
     );
   }
 

@@ -17,7 +17,8 @@ public class WorkerDashboardSummaryDto
 {
     public int PendingReviews { get; set; }
 
-    public int ActiveAccess { get; set; }
+    // Requests already reviewed by the worker, including approved, rejected, partial, and revoked.
+    public int ReviewedRequests { get; set; }
 
     public int TotalRequests { get; set; }
 }
@@ -43,14 +44,12 @@ public class WorkerDashboardRequestDto
 
     public string EmployerName { get; set; } = string.Empty;
 
-    // Comma-separated labels for all requested data items in this request.
     public string RequestedInformation { get; set; } = string.Empty;
 
     public string CheckPurpose { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }
 
-    // Display status for the whole request.
     // 0 = Pending, 1 = Approved, 2 = Rejected, 3 = Revoked, 4 = Partially approved / mixed.
     public int Status { get; set; }
 
@@ -61,16 +60,12 @@ public class BlockchainRecordDto
 {
     public string Action { get; set; } = string.Empty;
 
-    // User-friendly action label for dashboard display.
     public string ActionLabel { get; set; } = string.Empty;
 
-    // Short explanation for normal users.
     public string UserMessage { get; set; } = string.Empty;
 
-    // Company name matched from the employer table.
     public string EmployerName { get; set; } = string.Empty;
 
-    // Technical blockchain fields kept as proof, but not shown as the main content.
     public string EmployerAddress { get; set; } = string.Empty;
 
     public string WorkerAddress { get; set; } = string.Empty;

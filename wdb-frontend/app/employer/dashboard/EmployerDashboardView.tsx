@@ -1,35 +1,56 @@
 'use client';
+
+import Link from 'next/link';
+import { useState } from 'react';
 import type {
   EmployerDashboardData,
   EmployerRequestStatus,
 } from '@/lib/employerDashboardApi';
 import RequestModal from '../requests/RequestModal';
-import { useState } from 'react';
 
 type EmployerDashboardViewProps = {
   data: EmployerDashboardData;
 };
 
+const FIELD_PREVIEW_LIMIT = 3;
+
 function getStatusClassName(status: EmployerRequestStatus) {
-  switch (status) {
-    case 'Pending':
-      return 'border-amber-200 bg-amber-50 text-amber-700';
-    case 'Approved':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-    case 'PartiallyApproved':
-      return 'border-blue-200 bg-blue-50 text-blue-700';
-    case 'Rejected':
-      return 'border-red-200 bg-red-50 text-red-700';
-    case 'Revoked':
-      return 'border-slate-300 bg-slate-100 text-slate-600';
-    default:
-      return 'border-slate-200 bg-slate-50 text-slate-600';
+  if (status === 'Pending') {
+    return 'border-amber-200 bg-amber-50 text-amber-700';
   }
+
+  if (status === 'Revoked') {
+    return 'border-slate-300 bg-slate-100 text-slate-600';
+  }
+
+  return 'border-blue-200 bg-blue-50 text-blue-700';
 }
 
-// Turn PascalCase status names like "PartiallyApproved" into "Partially Approved" for display.
-function formatStatus(status: string) {
-  return status.replace(/([A-Z])/g, ' $1').trim();
+function formatStatus(status: EmployerRequestStatus) {
+  if (status === 'Pending') return 'Pending';
+  if (status === 'Revoked') return 'Revoked';
+
+  return 'Reviewed';
+}
+
+function formatDate(dateString: string) {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('en-NZ');
+}
+
+function formatRequestedFields(fields: string[]) {
+  if (!fields || fields.length === 0) {
+    return '-';
+  }
+
+  if (fields.length <= FIELD_PREVIEW_LIMIT) {
+    return fields.join(', ');
+  }
+
+  const preview = fields.slice(0, FIELD_PREVIEW_LIMIT).join(', ');
+  const remainingCount = fields.length - FIELD_PREVIEW_LIMIT;
+
+  return `${preview} +${remainingCount} more`;
 }
 
 export default function EmployerDashboardView({
@@ -39,18 +60,19 @@ export default function EmployerDashboardView({
 
   return (
     <main className="min-h-screen bg-slate-50 px-8 py-8">
-      {/* pop up to add new request */}
       {showModal && (
         <div
           className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50"
           onClick={() => setShowModal(false)}
         >
-          <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-lg">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-lg bg-white p-6"
+          >
             <RequestModal onClose={() => setShowModal(false)} />
           </div>
         </div>
-      )
-      }
+      )}
 
       <div className="mx-auto max-w-6xl space-y-6">
         <header>
@@ -58,9 +80,11 @@ export default function EmployerDashboardView({
             Employer Dashboard
           </h1>
         </header>
+
         <button
           onClick={() => setShowModal(true)}
-          className="mb-4 rounded-lg bg-[#49454F] px-4 py-2 text-sm font-medium text-white hover:bg-[#49454F]/90">
+          className="mb-4 rounded-lg bg-[#49454F] px-4 py-2 text-sm font-medium text-white hover:bg-[#49454F]/90"
+        >
           Create New Request
         </button>
 
@@ -98,7 +122,7 @@ export default function EmployerDashboardView({
             Request Summary
           </h2>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">Pending</p>
               <p className="mt-2 text-3xl font-semibold text-slate-900">
@@ -110,101 +134,106 @@ export default function EmployerDashboardView({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Partially Approved</p>
+              <p className="text-sm text-slate-500">Reviewed</p>
               <p className="mt-2 text-3xl font-semibold text-slate-900">
-                {data.summary.partiallyApprovedRequests}
+                {data.summary.reviewedRequests}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Requests with mixed responses
+                Requests already processed by workers
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Approved</p>
+              <p className="text-sm text-slate-500">Total Requests</p>
               <p className="mt-2 text-3xl font-semibold text-slate-900">
-                {data.summary.approvedRequests}
+                {data.summary.totalRequests}
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Requests with all fields approved
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Active Access</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">
-                {data.summary.activeAccessCount}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Requests you can currently view
+                All requests you have sent
               </p>
             </div>
           </div>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Recent Access Requests
-          </h2>
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Recent Access Requests
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Latest 3 access requests and their current overall status.
+              </p>
+            </div>
 
-          <p className="mt-1 mb-4 text-sm text-slate-500">
-            Latest access requests and their current overall status.
-          </p>
+            <Link
+              href="/employer/dataAccess"
+              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              View all requests
+            </Link>
+          </div>
 
           {data.recentRequests.length === 0 ? (
             <p className="text-sm text-slate-500">
               No recent access requests.
             </p>
           ) : (
-            <div className="divide-y divide-slate-200">
-              {data.recentRequests.map((request) => (
-                <div
-                  key={request.requestId}
-                  className="grid gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[1.2fr_1.6fr_1.6fr_8rem_8rem]"
-                >
-                  <div>
-                    <p className="text-sm text-slate-500">Worker</p>
-                    <p className="mt-1 font-medium text-slate-900">
-                      {request.workerName}
-                    </p>
-                  </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-slate-200 text-sm font-semibold text-slate-900">
+                    <th className="pb-4 pr-6">Worker</th>
+                    <th className="pb-4 pr-6">Requested Fields</th>
+                    <th className="pb-4 pr-6">Reason</th>
+                    <th className="pb-4 pr-6">Status</th>
+                    <th className="pb-4 text-right">Last Updated</th>
+                  </tr>
+                </thead>
 
-                  <div>
-                    <p className="text-sm text-slate-500">Requested Fields</p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      {request.requestedFields.join(', ')}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-slate-500">Reason</p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      {request.reason}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-slate-500">Status</p>
-                    <span
-                      className={`mt-1 inline-flex w-28 justify-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusClassName(
-                        request.status
-                      )}`}
+                <tbody>
+                  {data.recentRequests.map((request) => (
+                    <tr
+                      key={request.requestId}
+                      className="border-b border-slate-100 text-sm text-slate-900 last:border-b-0"
                     >
-                      {formatStatus(request.status)}
-                    </span>
-                  </div>
+                      <td className="py-4 pr-6 font-medium">
+                        {request.workerName}
+                      </td>
 
-                  <div className="md:text-right">
-                    <p className="text-sm text-slate-500">Last Updated</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {new Date(request.lastUpdatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                      <td className="max-w-sm py-4 pr-6 text-slate-700">
+                        <span className="line-clamp-2">
+                          {formatRequestedFields(request.requestedFields)}
+                        </span>
+                      </td>
+
+                      <td className="max-w-xs py-4 pr-6 text-slate-700">
+                        <span className="line-clamp-2">
+                          {request.reason || '-'}
+                        </span>
+                      </td>
+
+                      <td className="py-4 pr-6">
+                        <span
+                          className={`inline-flex w-28 justify-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusClassName(
+                            request.status
+                          )}`}
+                        >
+                          {formatStatus(request.status)}
+                        </span>
+                      </td>
+
+                      <td className="py-4 text-right text-slate-600">
+                        {formatDate(request.lastUpdatedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
       </div>
-    </main >
+    </main>
   );
 }

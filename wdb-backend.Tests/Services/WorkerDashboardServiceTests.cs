@@ -1,333 +1,231 @@
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.Extensions.Logging;
-//using Moq;
-//using wdb_backend.Abstractions;
-//using wdb_backend.Common;
-//using wdb_backend.Data;
-//using wdb_backend.Models;
-//using wdb_backend.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using wdb_backend.Abstractions;
+using wdb_backend.Common;
+using wdb_backend.Data;
+using wdb_backend.Models;
+using wdb_backend.Services;
 
-//namespace wdb_backend.Tests.Services;
+namespace wdb_backend.Tests.Services;
 
-//public class WorkerDashboardServiceTests
-//{
-//    private const string TestPassword = "Password123!";
+public class WorkerDashboardServiceTests
+{
+    private const string TestPassword = "Password123!";
 
-//    private static AppDbContext CreateDbContext()
-//    {
-//        var options = new DbContextOptionsBuilder<AppDbContext>()
-//            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-//            .Options;
+    private static AppDbContext CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
 
-//        return new AppDbContext(options);
-//    }
+        return new AppDbContext(options);
+    }
 
-//    private static WorkerDashboardServiceImpl CreateService(
-//        AppDbContext dbContext,
-//        Mock<IBlockchainService>? blockchainServiceMock = null)
-//    {
-//        blockchainServiceMock ??= new Mock<IBlockchainService>();
+    private static WorkerDashboardServiceImpl CreateService(AppDbContext dbContext)
+    {
+        var blockchainServiceMock = new Mock<IBlockchainService>();
+        var loggerMock = new Mock<ILogger<WorkerDashboardServiceImpl>>();
 
-//        var loggerMock = new Mock<ILogger<WorkerDashboardServiceImpl>>();
+        return new WorkerDashboardServiceImpl(
+            dbContext,
+            blockchainServiceMock.Object,
+            loggerMock.Object
+        );
+    }
 
-//        return new WorkerDashboardServiceImpl(
-//            dbContext,
-//            blockchainServiceMock.Object,
-//            loggerMock.Object
-//        );
-//    }
+    [Fact]
+    public async Task GetDashboardAsync_ReturnsNull_WhenWorkerDoesNotExist()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
 
-//    [Fact]
-//    public async Task GetDashboardAsync_ReturnsNull_WhenWorkerDoesNotExist()
-//    {
-//        // Arrange
-//        await using var dbContext = CreateDbContext();
-//        var service = CreateService(dbContext);
+        var result = await service.GetDashboardAsync(Guid.NewGuid());
 
-//        var missingWorkerId = Guid.NewGuid();
+        Assert.Null(result);
+    }
 
-//        // Act
-//        var result = await service.GetDashboardAsync(missingWorkerId);
+    [Fact]
+    public async Task GetDashboardAsync_ReturnsWorkerBasicInfo_WhenWorkerExists()
+    {
+        await using var dbContext = CreateDbContext();
 
-//        // Assert
-//        Assert.Null(result);
-//    }
+        var worker = new Worker
+        {
+            Id = Guid.NewGuid(),
+            Name = "Alan Brown",
+            Email = "worker_001@test.com",
+            Password = TestPassword,
+            Verified = false,
+            BlockchainAddress = null
+        };
 
-//    [Fact]
-//    public async Task GetDashboardAsync_ReturnsWorkerBasicInfo_WhenWorkerExists()
-//    {
-//        // Arrange
-//        await using var dbContext = CreateDbContext();
+        dbContext.Workers.Add(worker);
+        await dbContext.SaveChangesAsync();
 
-//        var worker = new Worker
-//        {
-//            Id = Guid.NewGuid(),
-//            Name = "Alan Brown",
-//            Email = "worker_001@test.com",
-//            Password = TestPassword,
-//            Verified = false,
-//            BlockchainAddress = null
-//        };
+        var service = CreateService(dbContext);
 
-//        dbContext.Workers.Add(worker);
-//        await dbContext.SaveChangesAsync();
+        var result = await service.GetDashboardAsync(worker.Id);
 
-//        var service = CreateService(dbContext);
+        Assert.NotNull(result);
+        Assert.Equal(worker.Id, result.Worker.Id);
+        Assert.Equal("Alan Brown", result.Worker.Name);
+        Assert.Equal("worker_001@test.com", result.Worker.Email);
+        Assert.False(result.Worker.Verified);
+        Assert.Null(result.Worker.BlockchainAddress);
+    }
 
-//        // Act
-//        var result = await service.GetDashboardAsync(worker.Id);
+    [Fact]
+    public async Task GetDashboardAsync_ReturnsSimplifiedSummaryCounts()
+    {
+        await using var dbContext = CreateDbContext();
 
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Equal(worker.Id, result.Worker.Id);
-//        Assert.Equal("Alan Brown", result.Worker.Name);
-//        Assert.Equal("worker_001@test.com", result.Worker.Email);
-//        Assert.False(result.Worker.Verified);
-//        Assert.Null(result.Worker.BlockchainAddress);
-//    }
+        var workerId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
 
-//    [Fact]
-//    public async Task GetDashboardAsync_ReturnsLatestRequests_WithPermissionAndWorkerInfoData()
-//    {
-//        // Arrange
-//        await using var dbContext = CreateDbContext();
+        SeedWorker(dbContext, workerId);
+        SeedEmployer(dbContext, employerId);
 
-//        var workerId = Guid.NewGuid();
-//        var employerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var workerInfoId = Guid.NewGuid();
+        var pendingRequestId = SeedRequest(dbContext, employerId, workerId, "Pending request");
+        var approvedRequestId = SeedRequest(dbContext, employerId, workerId, "Approved request");
+        var rejectedRequestId = SeedRequest(dbContext, employerId, workerId, "Rejected request");
 
-//        var worker = new Worker
-//        {
-//            Id = workerId,
-//            Name = "Alan Brown",
-//            Email = "worker_001@test.com",
-//            Password = TestPassword,
-//            Verified = false,
-//            BlockchainAddress = null
-//        };
+        var pendingInfoId = SeedCustomWorkerInfo(dbContext, workerId, "Phone");
+        var approvedInfoId = SeedCustomWorkerInfo(dbContext, workerId, "Address");
+        var rejectedInfoId = SeedCustomWorkerInfo(dbContext, workerId, "PPE Requirement");
 
-//        var employer = new Employer
-//        {
-//            Id = employerId,
-//            Name = "BuildSafe Ltd",
-//            Email = "buildsafe@test.com",
-//            Password = TestPassword,
-//            Verified = true
-//        };
+        SeedPermission(dbContext, pendingRequestId, workerId, pendingInfoId, PermissionStatus.Pending);
+        SeedPermission(dbContext, approvedRequestId, workerId, approvedInfoId, PermissionStatus.Approved);
+        SeedPermission(dbContext, rejectedRequestId, workerId, rejectedInfoId, PermissionStatus.Rejected);
 
-//        var workerInfo = new WorkerInfo
-//        {
-//            Id = workerInfoId,
-//            WorkerId = workerId,
-//            Desc = "PPE requirements",
-//            Value = "Safety boots required"
-//        };
+        await dbContext.SaveChangesAsync();
 
-//        var request = new Request
-//        {
-//            Id = requestId,
-//            WorkerId = workerId,
-//            EmployerId = employerId,
-//            Reason = "Site onboarding check",
-//            CreatedAt = new DateTime(2026, 5, 14, 10, 30, 0, DateTimeKind.Utc)
-//        };
+        var service = CreateService(dbContext);
 
-//        var permission = new Permission
-//        {
-//            Id = Guid.NewGuid(),
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            InfoId = workerInfoId,
-//            Status = PermissionStatus.Pending,
-//            ExpiryDate = null,
-//            LastUpdatedAt = new DateTime(2026, 5, 14, 10, 30, 0, DateTimeKind.Utc)
-//        };
+        var result = await service.GetDashboardAsync(workerId);
 
-//        dbContext.Workers.Add(worker);
-//        dbContext.Employers.Add(employer);
-//        dbContext.WorkerInfos.Add(workerInfo);
-//        dbContext.Requests.Add(request);
-//        dbContext.Permissions.Add(permission);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Summary.PendingReviews);
+        Assert.Equal(2, result.Summary.ReviewedRequests);
+        Assert.Equal(3, result.Summary.TotalRequests);
+    }
 
-//        await dbContext.SaveChangesAsync();
+    [Fact]
+    public async Task GetDashboardAsync_ReturnsLatestThreeRequests()
+    {
+        await using var dbContext = CreateDbContext();
 
-//        var service = CreateService(dbContext);
+        var workerId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
 
-//        // Act
-//        var result = await service.GetDashboardAsync(workerId);
+        SeedWorker(dbContext, workerId);
+        SeedEmployer(dbContext, employerId);
 
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Single(result.LatestRequests);
+        for (var i = 1; i <= 5; i++)
+        {
+            var requestId = SeedRequest(
+                dbContext,
+                employerId,
+                workerId,
+                $"Reason {i}",
+                new DateTime(2026, 5, i, 10, 0, 0, DateTimeKind.Utc)
+            );
 
-//        var latestRequest = result.LatestRequests[0];
+            var infoId = SeedCustomWorkerInfo(dbContext, workerId, $"Info {i}");
+            SeedPermission(dbContext, requestId, workerId, infoId, PermissionStatus.Pending);
+        }
 
-//        Assert.Equal(requestId, latestRequest.RequestId);
-//        Assert.Equal(employerId, latestRequest.EmployerId);
-//        Assert.Equal("BuildSafe Ltd", latestRequest.EmployerName);
-//        Assert.Equal("PPE requirements", latestRequest.RequestedInformation);
-//        Assert.Equal("Site onboarding check", latestRequest.CheckPurpose);
-//        Assert.Equal(request.CreatedAt, latestRequest.CreatedAt);
-//        Assert.Equal((int)PermissionStatus.Pending, latestRequest.Status);
-//        Assert.Null(latestRequest.ExpiresAt);
-//    }
+        await dbContext.SaveChangesAsync();
 
-//    [Fact]
-//    public async Task GetDashboardAsync_ReturnsApprovedRequest_WithExpiryDate()
-//    {
-//        // Arrange
-//        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
 
-//        var workerId = Guid.NewGuid();
-//        var employerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var workerInfoId = Guid.NewGuid();
+        var result = await service.GetDashboardAsync(workerId);
 
-//        var expiryDate = new DateTime(2026, 6, 6, 0, 0, 0, DateTimeKind.Utc);
+        Assert.NotNull(result);
+        Assert.Equal(3, result.LatestRequests.Count);
+        Assert.Equal("Reason 5", result.LatestRequests[0].CheckPurpose);
+        Assert.Equal("Reason 4", result.LatestRequests[1].CheckPurpose);
+        Assert.Equal("Reason 3", result.LatestRequests[2].CheckPurpose);
+    }
 
-//        dbContext.Workers.Add(new Worker
-//        {
-//            Id = workerId,
-//            Name = "Liam Johnson",
-//            Email = "liam.johnson@example.com",
-//            Password = TestPassword,
-//            Verified = false,
-//            BlockchainAddress = null
-//        });
+    private static void SeedWorker(AppDbContext dbContext, Guid workerId)
+    {
+        dbContext.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "Alan Brown",
+            Email = "worker_001@test.com",
+            Password = TestPassword,
+            Verified = false,
+            BlockchainAddress = null
+        });
+    }
 
-//        dbContext.Employers.Add(new Employer
-//        {
-//            Id = employerId,
-//            Name = "Company_D",
-//            Email = "companyd@test.com",
-//            Password = TestPassword,
-//            Verified = true
-//        });
+    private static void SeedEmployer(AppDbContext dbContext, Guid employerId)
+    {
+        dbContext.Employers.Add(new Employer
+        {
+            Id = employerId,
+            Name = "First Step Solutions",
+            Email = "employer_001@test.com",
+            Password = TestPassword,
+            Verified = true
+        });
+    }
 
-//        dbContext.WorkerInfos.Add(new WorkerInfo
-//        {
-//            Id = workerInfoId,
-//            WorkerId = workerId,
-//            Desc = "Family health history",
-//            Value = "Private test value"
-//        });
+    private static Guid SeedRequest(
+        AppDbContext dbContext,
+        Guid employerId,
+        Guid workerId,
+        string reason,
+        DateTime? createdAt = null)
+    {
+        var requestId = Guid.NewGuid();
 
-//        dbContext.Requests.Add(new Request
-//        {
-//            Id = requestId,
-//            WorkerId = workerId,
-//            EmployerId = employerId,
-//            Reason = "Pre-employment screening",
-//            CreatedAt = new DateTime(2026, 5, 6, 2, 15, 0, DateTimeKind.Utc)
-//        });
+        dbContext.Requests.Add(new Request
+        {
+            Id = requestId,
+            EmployerId = employerId,
+            WorkerId = workerId,
+            Reason = reason,
+            CreatedAt = createdAt ?? DateTime.UtcNow
+        });
 
-//        dbContext.Permissions.Add(new Permission
-//        {
-//            Id = Guid.NewGuid(),
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            InfoId = workerInfoId,
-//            Status = PermissionStatus.Approved,
-//            ExpiryDate = expiryDate,
-//            LastUpdatedAt = new DateTime(2026, 5, 6, 2, 20, 0, DateTimeKind.Utc)
-//        });
+        return requestId;
+    }
 
-//        await dbContext.SaveChangesAsync();
+    private static Guid SeedCustomWorkerInfo(AppDbContext dbContext, Guid workerId, string label)
+    {
+        var infoId = Guid.NewGuid();
 
-//        var service = CreateService(dbContext);
+        dbContext.WorkerInfos.Add(new WorkerInfo
+        {
+            Id = infoId,
+            WorkerId = workerId,
+            CustomLabel = label,
+            Type = "text",
+            Value = $"Value for {label}",
+            CreatedAt = DateTime.UtcNow
+        });
 
-//        // Act
-//        var result = await service.GetDashboardAsync(workerId);
+        return infoId;
+    }
 
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Single(result.LatestRequests);
-
-//        var latestRequest = result.LatestRequests[0];
-
-//        Assert.Equal("Company_D", latestRequest.EmployerName);
-//        Assert.Equal("Family health history", latestRequest.RequestedInformation);
-//        Assert.Equal("Pre-employment screening", latestRequest.CheckPurpose);
-//        Assert.Equal((int)PermissionStatus.Approved, latestRequest.Status);
-//        Assert.Equal(expiryDate, latestRequest.ExpiresAt);
-//    }
-
-//    [Fact]
-//    public async Task GetDashboardAsync_ReturnsOnlyLatestFiveRequests()
-//    {
-//        // Arrange
-//        await using var dbContext = CreateDbContext();
-
-//        var workerId = Guid.NewGuid();
-//        var employerId = Guid.NewGuid();
-
-//        dbContext.Workers.Add(new Worker
-//        {
-//            Id = workerId,
-//            Name = "Alan Brown",
-//            Email = "worker_001@test.com",
-//            Password = TestPassword,
-//            Verified = false,
-//            BlockchainAddress = null
-//        });
-
-//        dbContext.Employers.Add(new Employer
-//        {
-//            Id = employerId,
-//            Name = "Company_001",
-//            Email = "company001@test.com",
-//            Password = TestPassword,
-//            Verified = true
-//        });
-
-//        for (var i = 1; i <= 6; i++)
-//        {
-//            var requestId = Guid.NewGuid();
-//            var workerInfoId = Guid.NewGuid();
-
-//            dbContext.WorkerInfos.Add(new WorkerInfo
-//            {
-//                Id = workerInfoId,
-//                WorkerId = workerId,
-//                Desc = $"Info {i}",
-//                Value = $"Value {i}"
-//            });
-
-//            dbContext.Requests.Add(new Request
-//            {
-//                Id = requestId,
-//                WorkerId = workerId,
-//                EmployerId = employerId,
-//                Reason = $"Reason {i}",
-//                CreatedAt = new DateTime(2026, 5, i, 10, 0, 0, DateTimeKind.Utc)
-//            });
-
-//            dbContext.Permissions.Add(new Permission
-//            {
-//                Id = Guid.NewGuid(),
-//                WorkerId = workerId,
-//                RequestId = requestId,
-//                InfoId = workerInfoId,
-//                Status = PermissionStatus.Pending,
-//                ExpiryDate = null,
-//                LastUpdatedAt = new DateTime(2026, 5, i, 10, 0, 0, DateTimeKind.Utc)
-//            });
-//        }
-
-//        await dbContext.SaveChangesAsync();
-
-//        var service = CreateService(dbContext);
-
-//        // Act
-//        var result = await service.GetDashboardAsync(workerId);
-
-//        // Assert
-//        Assert.NotNull(result);
-//        Assert.Equal(5, result.LatestRequests.Count);
-
-//        // The newest request should be first.
-//        Assert.Equal("Reason 6", result.LatestRequests[0].CheckPurpose);
-//        Assert.Equal("Reason 2", result.LatestRequests[4].CheckPurpose);
-//    }
-//}
+    private static void SeedPermission(
+        AppDbContext dbContext,
+        Guid requestId,
+        Guid workerId,
+        Guid infoId,
+        int status)
+    {
+        dbContext.Permissions.Add(new Permission
+        {
+            Id = Guid.NewGuid(),
+            RequestId = requestId,
+            WorkerId = workerId,
+            InfoId = infoId,
+            Status = status,
+            LastUpdatedAt = DateTime.UtcNow
+        });
+    }
+}

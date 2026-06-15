@@ -31,14 +31,12 @@ function getStatusLabel(status: number) {
   switch (status) {
     case 0:
       return 'Pending';
-    case 1:
-      return 'Approved';
-    case 2:
-      return 'Rejected';
     case 3:
       return 'Revoked';
+    case 1:
+    case 2:
     case 4:
-      return 'Partially approved';
+      return 'Reviewed';
     default:
       return 'Unknown';
   }
@@ -48,12 +46,10 @@ function getStatusBadgeClass(status: number) {
   switch (status) {
     case 0:
       return 'bg-orange-100 text-orange-700';
-    case 1:
-      return 'bg-emerald-100 text-emerald-700';
-    case 2:
-      return 'bg-red-100 text-red-700';
     case 3:
       return 'bg-slate-100 text-slate-700';
+    case 1:
+    case 2:
     case 4:
       return 'bg-blue-100 text-blue-700';
     default:
@@ -70,7 +66,7 @@ export default function WorkerDashboardView({
   data,
 }: WorkerDashboardViewProps) {
   const pendingCount = data.summary.pendingReviews;
-  const activeAccessCount = data.summary.activeAccess;
+  const reviewedCount = data.summary.reviewedRequests;
   const totalRequests = data.summary.totalRequests;
 
   return (
@@ -85,8 +81,7 @@ export default function WorkerDashboardView({
               Welcome back, {data.worker.name}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Review data requests, monitor active access, and check your audit
-              history.
+              Review data requests and check your audit history.
             </p>
           </div>
 
@@ -98,24 +93,24 @@ export default function WorkerDashboardView({
           </Link>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Pending reviews</p>
+            <p className="text-sm text-slate-500">Pending</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
               {pendingCount}
             </p>
             <p className="mt-2 text-xs text-slate-500">
-              Requests waiting for your decision
+              Requests waiting for your review
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Active access</p>
+            <p className="text-sm text-slate-500">Reviewed</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">
-              {activeAccessCount}
+              {reviewedCount}
             </p>
             <p className="mt-2 text-xs text-slate-500">
-              Approved data items that have not expired
+              Requests you have already reviewed
             </p>
           </div>
 
@@ -125,19 +120,7 @@ export default function WorkerDashboardView({
               {totalRequests}
             </p>
             <p className="mt-2 text-xs text-slate-500">
-              Requests received across all companies
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Blockchain audit</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
-              {data.blockchainAvailable ? 'Connected' : 'Unavailable'}
-            </p>
-            <p className="mt-2 text-xs text-slate-500">
-              {data.blockchainAvailable
-                ? 'On-chain records are available.'
-                : 'Blockchain is not running or no records are available yet.'}
+              Requests received from companies
             </p>
           </div>
         </section>
@@ -149,7 +132,7 @@ export default function WorkerDashboardView({
                 Latest requests
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Recent data access requests grouped by request.
+                Latest 3 data access requests grouped by request.
               </p>
             </div>
 
@@ -167,7 +150,7 @@ export default function WorkerDashboardView({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-collapse text-left">
+              <table className="w-full min-w-[820px] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-slate-200 text-sm font-semibold text-slate-900">
                     <th className="pb-4 pr-6">Company</th>
@@ -175,8 +158,7 @@ export default function WorkerDashboardView({
                     <th className="pb-4 pr-6">Purpose</th>
                     <th className="pb-4 pr-6">Requested</th>
                     <th className="pb-4 pr-6">Status</th>
-                    <th className="pb-4 pr-6">Expires</th>
-                    <th className="pb-4">Action</th>
+                    <th className="pb-4">Expires</th>
                   </tr>
                 </thead>
 
@@ -216,21 +198,8 @@ export default function WorkerDashboardView({
                         </span>
                       </td>
 
-                      <td className="py-4 pr-6">
-                        {formatDate(request.expiresAt)}
-                      </td>
-
                       <td className="py-4">
-                        {request.status === 0 || request.status === 4 ? (
-                          <Link
-                            href="/worker/dataAccess"
-                            className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-                          >
-                            Review
-                          </Link>
-                        ) : (
-                          <span className="text-sm text-slate-400">-</span>
-                        )}
+                        {formatDate(request.expiresAt)}
                       </td>
                     </tr>
                   ))}

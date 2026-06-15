@@ -1,229 +1,245 @@
-//using Microsoft.EntityFrameworkCore;
-//using wdb_backend.Common;
-//using wdb_backend.Data;
-//using wdb_backend.Models;
-//using wdb_backend.Services;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using wdb_backend.Abstractions;
+using wdb_backend.Common;
+using wdb_backend.Data;
+using wdb_backend.Models;
+using wdb_backend.Services;
 
-//namespace wdb_backend.Tests.Services;
+namespace wdb_backend.Tests.Services;
 
-//public class EmployerActiveAccessServiceTests
-//{
-//    private static AppDbContext CreateContext()
-//    {
-//        var options = new DbContextOptionsBuilder<AppDbContext>()
-//            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-//            .Options;
+public class EmployerActiveAccessServiceTests
+{
+    private static AppDbContext CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
 
-//        return new AppDbContext(options);
-//    }
+        return new AppDbContext(options);
+    }
 
-//    [Fact]
-//    public async Task GetActiveAccessAsync_ReturnsApprovedActiveAccess()
-//    {
-//        // Arrange
-//        await using var context = CreateContext();
+    private static EmployerActiveAccessServiceImpl CreateService(AppDbContext context)
+    {
+        return new EmployerActiveAccessServiceImpl(
+            context,
+            Mock.Of<ISupabaseStorageService>(),
+            Mock.Of<IMediator>(),
+            Mock.Of<IBlockchainService>(),
+            Mock.Of<ILogger<EmployerActiveAccessServiceImpl>>());
+    }
 
-//        var employerId = Guid.NewGuid();
-//        var workerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var infoId = Guid.NewGuid();
-//        var permissionId = Guid.NewGuid();
+    [Fact]
+    public async Task GetActiveAccessAsync_Throws_WhenEmployerDoesNotExist()
+    {
+        await using var context = CreateDbContext();
+        var service = CreateService(context);
 
-//        context.Employers.Add(new Employer
-//        {
-//            Id = employerId,
-//            Name = "BuildSafe Ltd",
-//            Email = "buildsafe@test.com",
-//            Password = "password",
-//            Verified = true
-//        });
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.GetActiveAccessAsync(Guid.NewGuid()));
+    }
 
-//        context.Workers.Add(new Worker
-//        {
-//            Id = workerId,
-//            Name = "Alan Brown",
-//            Email = "worker_001@test.com",
-//            Password = "password",
-//            Verified = true
-//        });
+    [Fact]
+    public async Task GetActiveAccessAsync_ReturnsOnlyActiveApprovedAccess()
+    {
+        await using var context = CreateDbContext();
 
-//        context.WorkerInfos.Add(new WorkerInfo
-//        {
-//            Id = infoId,
-//            WorkerId = workerId,
-//            Desc = "PPE Requirements",
-//            Value = "Safety boots"
-//        });
+        var employerId = Guid.NewGuid();
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var fieldId = Guid.NewGuid();
+        var infoId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
 
-//        context.Requests.Add(new Request
-//        {
-//            Id = requestId,
-//            EmployerId = employerId,
-//            WorkerId = workerId,
-//            Reason = "Site onboarding check",
-//            CreatedAt = DateTime.UtcNow.AddDays(-1)
-//        });
+        context.Employers.Add(new Employer
+        {
+            Id = employerId,
+            Name = "First Step Solutions",
+            Email = "employer@test.com"
+        });
 
-//        context.Permissions.Add(new Permission
-//        {
-//            Id = permissionId,
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            InfoId = infoId,
-//            Status = PermissionStatus.Approved,
-//            LastUpdatedAt = DateTime.UtcNow,
-//            ExpiryDate = DateTime.UtcNow.AddDays(7)
-//        });
+        context.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "Worker One",
+            Email = "worker@test.com"
+        });
 
-//        await context.SaveChangesAsync();
+        context.Categories.Add(new Category
+        {
+            Id = categoryId,
+            CategoryName = "BasicInfo"
+        });
 
-//        var service = new EmployerActiveAccessServiceImpl(context);
+        context.Fields.Add(new Field
+        {
+            Id = fieldId,
+            CategoryId = categoryId,
+            FieldName = "full_name",
+            Label = "Full Name",
+            AllowedType = "text"
+        });
 
-//        // Act
-//        var result = await service.GetActiveAccessAsync(employerId);
+        context.WorkerInfos.Add(new WorkerInfo
+        {
+            Id = infoId,
+            WorkerId = workerId,
+            FieldId = fieldId,
+            Type = "text",
+            Value = "Worker One"
+        });
 
-//        // Assert
-//        Assert.Single(result);
+        context.Requests.Add(new Request
+        {
+            Id = requestId,
+            EmployerId = employerId,
+            WorkerId = workerId,
+            Reason = "Site onboarding",
+            CreatedAt = new DateTime(2026, 6, 1, 10, 0, 0, DateTimeKind.Utc),
+            ExpiryDate = DateTime.UtcNow.AddDays(7)
+        });
 
-//        var access = result[0];
+        context.Permissions.Add(new Permission
+        {
+            Id = permissionId,
+            RequestId = requestId,
+            WorkerId = workerId,
+            InfoId = infoId,
+            Status = PermissionStatus.Approved,
+            LastUpdatedAt = new DateTime(2026, 6, 2, 10, 0, 0, DateTimeKind.Utc)
+        });
 
-//        Assert.Equal(requestId, access.RequestId);
-//        Assert.Equal(workerId, access.WorkerId);
-//        Assert.Equal("Alan Brown", access.WorkerName);
-//        Assert.Equal("worker_001@test.com", access.WorkerEmail);
-//        Assert.Equal("Site onboarding check", access.Reason);
-//        Assert.Single(access.WorkerInfo);
-//        Assert.Equal(permissionId, access.WorkerInfo[0].PermissionId);
-//        Assert.Equal("PPE Requirements", access.WorkerInfo[0].DataType);
-//        Assert.Equal("Safety boots", access.WorkerInfo[0].Value);
-//    }
+        await context.SaveChangesAsync();
 
-//    [Fact]
-//    public async Task GetActiveAccessAsync_ExcludesPendingRejectedAndExpiredPermissions()
-//    {
-//        // Arrange
-//        await using var context = CreateContext();
+        var service = CreateService(context);
 
-//        var employerId = Guid.NewGuid();
-//        var workerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
+        var result = await service.GetActiveAccessAsync(employerId);
 
-//        var approvedInfoId = Guid.NewGuid();
-//        var pendingInfoId = Guid.NewGuid();
-//        var rejectedInfoId = Guid.NewGuid();
-//        var expiredInfoId = Guid.NewGuid();
+        Assert.Single(result);
+        Assert.Equal(requestId, result[0].RequestId);
+        Assert.Equal("Worker One", result[0].WorkerName);
+        Assert.Equal("Site onboarding", result[0].Reason);
 
-//        context.Employers.Add(new Employer
-//        {
-//            Id = employerId,
-//            Name = "BuildSafe Ltd",
-//            Email = "buildsafe@test.com",
-//            Password = "password",
-//            Verified = true
-//        });
+        var category = Assert.Single(result[0].Categories);
+        Assert.Equal("BasicInfo", category.Name);
 
-//        context.Workers.Add(new Worker
-//        {
-//            Id = workerId,
-//            Name = "Alan Brown",
-//            Email = "worker_001@test.com",
-//            Password = "password",
-//            Verified = true
-//        });
+        var item = Assert.Single(category.Items);
+        Assert.Equal(permissionId, item.PermissionId);
+        Assert.Equal("Full Name", item.Label);
+        Assert.Equal("text", item.Type);
+        Assert.False(item.IsCustom);
+    }
 
-//        context.WorkerInfos.AddRange(
-//            new WorkerInfo
-//            {
-//                Id = approvedInfoId,
-//                WorkerId = workerId,
-//                Desc = "country",
-//                Value = "New Zealand"
-//            },
-//            new WorkerInfo
-//            {
-//                Id = pendingInfoId,
-//                WorkerId = workerId,
-//                Desc = "gender",
-//                Value = "Male"
-//            },
-//            new WorkerInfo
-//            {
-//                Id = rejectedInfoId,
-//                WorkerId = workerId,
-//                Desc = "Emergency Contact",
-//                Value = "Sarah Brown"
-//            },
-//            new WorkerInfo
-//            {
-//                Id = expiredInfoId,
-//                WorkerId = workerId,
-//                Desc = "PPE Requirements",
-//                Value = "Safety boots"
-//            }
-//        );
+    [Fact]
+    public async Task GetActiveAccessAsync_IgnoresExpiredRequests()
+    {
+        await using var context = CreateDbContext();
 
-//        context.Requests.Add(new Request
-//        {
-//            Id = requestId,
-//            EmployerId = employerId,
-//            WorkerId = workerId,
-//            Reason = "Access filtering test",
-//            CreatedAt = DateTime.UtcNow.AddDays(-1)
-//        });
+        var employerId = Guid.NewGuid();
+        var workerId = Guid.NewGuid();
 
-//        context.Permissions.AddRange(
-//            new Permission
-//            {
-//                Id = Guid.NewGuid(),
-//                WorkerId = workerId,
-//                RequestId = requestId,
-//                InfoId = approvedInfoId,
-//                Status = PermissionStatus.Approved,
-//                LastUpdatedAt = DateTime.UtcNow,
-//                ExpiryDate = DateTime.UtcNow.AddDays(7)
-//            },
-//            new Permission
-//            {
-//                Id = Guid.NewGuid(),
-//                WorkerId = workerId,
-//                RequestId = requestId,
-//                InfoId = pendingInfoId,
-//                Status = PermissionStatus.Pending,
-//                LastUpdatedAt = DateTime.UtcNow,
-//                ExpiryDate = null
-//            },
-//            new Permission
-//            {
-//                Id = Guid.NewGuid(),
-//                WorkerId = workerId,
-//                RequestId = requestId,
-//                InfoId = rejectedInfoId,
-//                Status = PermissionStatus.Rejected,
-//                LastUpdatedAt = DateTime.UtcNow,
-//                ExpiryDate = null
-//            },
-//            new Permission
-//            {
-//                Id = Guid.NewGuid(),
-//                WorkerId = workerId,
-//                RequestId = requestId,
-//                InfoId = expiredInfoId,
-//                Status = PermissionStatus.Approved,
-//                LastUpdatedAt = DateTime.UtcNow,
-//                ExpiryDate = DateTime.UtcNow.AddDays(-1)
-//            }
-//        );
+        context.Employers.Add(new Employer
+        {
+            Id = employerId,
+            Name = "Employer",
+            Email = "employer@test.com"
+        });
 
-//        await context.SaveChangesAsync();
+        context.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "Worker",
+            Email = "worker@test.com"
+        });
 
-//        var service = new EmployerActiveAccessServiceImpl(context);
+        context.Requests.Add(new Request
+        {
+            Id = Guid.NewGuid(),
+            EmployerId = employerId,
+            WorkerId = workerId,
+            Reason = "Expired request",
+            CreatedAt = DateTime.UtcNow.AddDays(-10),
+            ExpiryDate = DateTime.UtcNow.AddDays(-1)
+        });
 
-//        // Act
-//        var result = await service.GetActiveAccessAsync(employerId);
+        await context.SaveChangesAsync();
 
-//        // Assert
-//        Assert.Single(result);
-//        Assert.Single(result[0].WorkerInfo);
-//        Assert.Equal("country", result[0].WorkerInfo[0].DataType);
-//    }
-//}
+        var service = CreateService(context);
+
+        var result = await service.GetActiveAccessAsync(employerId);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task ViewRequestAsync_Throws_WhenRequestDoesNotBelongToEmployer()
+    {
+        await using var context = CreateDbContext();
+
+        var employerId = Guid.NewGuid();
+        var otherEmployerId = Guid.NewGuid();
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+
+        context.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "Worker",
+            Email = "worker@test.com"
+        });
+
+        context.Requests.Add(new Request
+        {
+            Id = requestId,
+            EmployerId = otherEmployerId,
+            WorkerId = workerId,
+            Reason = "Private request",
+            CreatedAt = DateTime.UtcNow,
+            ExpiryDate = DateTime.UtcNow.AddDays(5)
+        });
+
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.ViewRequestAsync(employerId, requestId));
+    }
+
+    [Fact]
+    public async Task ViewRequestAsync_Throws_WhenRequestExpired()
+    {
+        await using var context = CreateDbContext();
+
+        var employerId = Guid.NewGuid();
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+
+        context.Workers.Add(new Worker
+        {
+            Id = workerId,
+            Name = "Worker",
+            Email = "worker@test.com"
+        });
+
+        context.Requests.Add(new Request
+        {
+            Id = requestId,
+            EmployerId = employerId,
+            WorkerId = workerId,
+            Reason = "Expired request",
+            CreatedAt = DateTime.UtcNow.AddDays(-10),
+            ExpiryDate = DateTime.UtcNow.AddDays(-1)
+        });
+
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ViewRequestAsync(employerId, requestId));
+    }
+}
