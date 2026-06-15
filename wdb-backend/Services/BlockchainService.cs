@@ -223,6 +223,11 @@ public class BlockchainService : IBlockchainService
         return QueryLogsAsync(employerAddress: employerAddress);
     }
 
+    // publicnode Sepolia limits eth_getLogs to 50000 blocks per call.
+    // Keep below that with a small buffer so production stays within bounds even
+    // if a few blocks are mined while iterating.
+    private const ulong LogQueryChunkSize = 45_000;
+
     private async Task<List<BlockchainTransactionResponse>> QueryLogsAsync(
         string? workerAddress = null,
         string? employerAddress = null)
@@ -231,16 +236,21 @@ public class BlockchainService : IBlockchainService
         {
             var web3 = new Web3(_rpcUrl);
             var contract = web3.Eth.GetContract(GetAbi(), _contractAddress);
-
             var eventHandler = contract.GetEvent<TransactionLogEvent>();
-            var fromBlock = _startBlock.HasValue
-                ? new BlockParameter(new HexBigInteger(_startBlock.Value))
-                : BlockParameter.CreateEarliest();
-            var filterInput = eventHandler.CreateFilterInput(
-                fromBlock: fromBlock,
-                toBlock: BlockParameter.CreateLatest());
 
-            var events = await eventHandler.GetAllChangesAsync(filterInput);
+            var latestBlock = (ulong)(await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync()).Value;
+            var startBlock = _startBlock ?? 0UL;
+
+            var events = new List<Nethereum.Contracts.EventLog<TransactionLogEvent>>();
+            for (var from = startBlock; from <= latestBlock; from += LogQueryChunkSize)
+            {
+                var to = Math.Min(from + LogQueryChunkSize - 1, latestBlock);
+                var filterInput = eventHandler.CreateFilterInput(
+                    fromBlock: new BlockParameter(new HexBigInteger(from)),
+                    toBlock: new BlockParameter(new HexBigInteger(to)));
+                var chunk = await eventHandler.GetAllChangesAsync(filterInput);
+                events.AddRange(chunk);
+            }
 
             return events
                 .Where(e =>
