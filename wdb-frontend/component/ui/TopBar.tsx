@@ -43,6 +43,7 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
     const pathSegments = pathname.split('/').filter(Boolean)
     const mainPages = ['dashboard', 'dataAccess', 'requests', 'profile']
     const showBack = pathSegments.length >= 2 && !mainPages.includes(pathSegments[1])
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 
     // load notifications
@@ -128,8 +129,15 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
                         {/* Messages */}
                         <div
                             className="relative"
-                            onMouseEnter={() => setMessagesHovered(true)}
-                            onMouseLeave={() => setMessagesHovered(false)}
+                            onMouseEnter={() => {
+                                if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+                                setMessagesHovered(true)
+                            }}
+                            onMouseLeave={() => {
+                                closeTimerRef.current = setTimeout(() => {
+                                    setMessagesHovered(false)
+                                }, 300)
+                            }}
                         >
                             <button className="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-t-xl">
                                 <div className="flex items-center gap-2">
@@ -146,13 +154,17 @@ export default function TopBar({ role, showBack: showBackProp }: { role: 'employ
 
                             {/* Second-level notification list */}
                             {messagesHovered && (
-                                <div className="absolute right-full top-0 mr-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
-                                    <div className="px-4 py-3 border-b border-gray-100">
-                                        <p className="text-sm font-semibold text-gray-800">Notifications</p>
-                                        {notifications.length > 0 && (
-                                            <p className="text-xs text-gray-400 mt-0.5">{notifications.length} unread</p>
-                                        )}
-                                    </div>
+                                <div
+                                    className="absolute right-full top-0 mr-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50"
+                                    onMouseEnter={() => {
+                                        if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+                                    }}
+                                    onMouseLeave={() => {
+                                        closeTimerRef.current = setTimeout(() => {
+                                            setMessagesHovered(false)
+                                        }, 300)
+                                    }}
+                                >
 
                                     <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
                                         {notifications.length === 0 ? (

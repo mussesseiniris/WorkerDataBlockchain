@@ -1,253 +1,297 @@
-//using Moq;
-//using wdb_backend.Models;
-//using wdb_backend.Services;
-//using wdb_backend.Abstractions;
-//using Microsoft.AspNetCore.Mvc;
-//using Xunit;
-//using System.Security;
-//using wdb_backend.Common;
-//using Microsoft.VisualBasic;
-//using wdb_backend.Data;
-//using Microsoft.EntityFrameworkCore;
-//using System.Text.Json;
-//namespace wdb_backend.Tests;
+using Moq;
+using wdb_backend.Abstractions;
+using wdb_backend.Models;
+using wdb_backend.Services;
+using wdb_backend.Common;
+using wdb_backend.Data;
+using Microsoft.EntityFrameworkCore;
 
+namespace wdb_backend.Tests;
 
-//public class WorkerServiceTests
-//{
+public class WorkerServiceTests
+{
+    // ── Helpers ───────────────────────────────────────────────────────────
 
-//    [Fact]
-//    public async Task GetByEmailAsync_EmailExists_ReturnsWorker()
-//    {
-//        // Arrange - prepare data
-//        var mockRepo = new Mock<IWorkerRepository>();
-//        var service = new WorkerServiceImpl(mockRepo.Object);
-//        var fakeWorker = new Worker { Name = "test1", Email = "test1@email" };
-//        mockRepo.Setup(r => r.GetByEmailAsync("test1@email", default)).ReturnsAsync(fakeWorker);
-//        // Act - call method
-//        var result = await service.GetByEmailAsync("test1@email");
-//        // Assert - check the result
-//        Assert.Equal(fakeWorker.Email, result.Email);
-//    }
-    
-//    [Fact]
-//    public async Task GetByEmailAsync_EmailNotExists_ThrowsException()
-//    {
-//        // Arrange - prepare data
-//        var mockRepo = new Mock<IWorkerRepository>();
-//        var service = new WorkerServiceImpl(mockRepo.Object);
+    private static AppDbContext CreateDbContext(string dbName)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+        return new AppDbContext(options);
+    }
 
-//        // Act - call method & Assert - check the result
-//        await Assert.ThrowsAsync<KeyNotFoundException>(()=>service.GetByEmailAsync("noExists@email"));
-//    }
+    // ── WorkerRepo ────────────────────────────────────────────────────────
 
+    [Fact]
+    public async Task GetByEmailAsync_EmailExists_ReturnsWorker()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetByEmailAsync_EmailExists_ReturnsWorker));
+        db.Workers.Add(new Worker { Name = "test1", Email = "test1@email.com", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
 
-//    [Fact]
-//    async public Task GetPermissionsTest()
-//    {
-//        // Arrange: I have no idea how to set the layers up
-//        var mockPermissionRepo = new Mock<IPermissionRepository>();
-//        var permissionService = new PermissionServiceImpl(mockPermissionRepo.Object);
+        var repo = new WorkerRepoImpl(db);
 
-//        var mockRequestRepo = new Mock<IRequestRepository>();
-//        var requestService = new RequestServiceImpl(mockRequestRepo.Object);
+        // Act
+        var result = await repo.GetByEmailAsync("test1@email.com");
 
-//        var workerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var employerId = Guid.NewGuid();
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("test1@email.com", result.Email);
+    }
 
-//        //permissions
-//        var fakePermissions = new List<Permission>
-//        {
-//            new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = 0, RequestId = requestId},
-//            new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = 0, RequestId = requestId},
-//            new Permission {Id = Guid.NewGuid(), WorkerId = workerId, Status = (PermissionStatus)1, RequestId = requestId}
+    [Fact]
+    public async Task GetByEmailAsync_EmailNotExists_ReturnsNull()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetByEmailAsync_EmailNotExists_ReturnsNull));
+        var repo = new WorkerRepoImpl(db);
 
-//        };
+        // Act
+        var result = await repo.GetByEmailAsync("notexists@email.com");
 
-//        //requests
-//        var fakeRequests = new Request{Id = requestId, EmployerId = employerId, Reason = "Reason 1"};
-            
-    
-        
-//        mockPermissionRepo.Setup(r => r.GetAllByWorkerIdAsync(workerId, default)).ReturnsAsync(fakePermissions);
-//        mockRequestRepo.Setup(r => r.GetByRequestIdAsync(requestId, default)).ReturnsAsync(fakeRequests);
+        // Assert
+        Assert.Null(result);
+    }
 
-//        // Act: 
-//        //Get permission based on workerid and filter to pending status
-//        var permissionResult = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
-        
-//        //Get requets using request id from permission rows 
-//        var requestResult = await requestService.GetByRequestIdAsync(requestId);
+    [Fact]
+    public async Task EmailExistsAsync_EmailExists_ReturnsTrue()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(EmailExistsAsync_EmailExists_ReturnsTrue));
+        db.Workers.Add(new Worker { Name = "test", Email = "exists@email.com", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
 
-        
-//        // Assert: the returned data is a list of permissions/request
-//        var returnedPermissions = Assert.IsType<List<Permission>>(permissionResult);
-//        var returnedRequests = Assert.IsType<Request>(requestResult);
-        
-//        // Assert: the correct number of permission retrieved
-//        Assert.Equal(2, returnedPermissions.Count);
-        
-//        // Assert: the permission status of rows is pending
-//        Assert.All(returnedPermissions, returnedPermission => Assert.True(returnedPermission.Status == 0));
-        
-//        // Assert: requests have correct requestId
-//        Assert.True(returnedRequests.Id == requestId);
+        var repo = new WorkerRepoImpl(db);
 
-//    }
+        // Act
+        var result = await repo.EmailExistsAsync("exists@email.com");
 
-//     [Fact]
-//    async public Task ChangePermissionStatusTest()
-//    {
-//        //permission id gets passed from frontend to backend 
-//        //goes to controller layer, calls the service layer, calls the repo layer
+        // Assert
+        Assert.True(result);
+    }
 
-//        //Arrange:
-//        var mockPermissionRepo = new Mock<IPermissionRepository>();
-//        var permissionService = new PermissionServiceImpl(mockPermissionRepo.Object);
-        
-//        var workerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var permissionId = Guid.NewGuid();
-        
+    [Fact]
+    public async Task EmailExistsAsync_EmailNotExists_ReturnsFalse()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(EmailExistsAsync_EmailNotExists_ReturnsFalse));
+        var repo = new WorkerRepoImpl(db);
 
-//        var fakePermission = new Permission {Id = permissionId, WorkerId = workerId, Status = 0, LastUpdatedAt = DateTime.UtcNow.AddSeconds(-1), RequestId = requestId};
-//        var fakePermissionUpdate = new Permission {Id = permissionId, WorkerId = workerId, Status = (PermissionStatus)1, LastUpdatedAt = DateTime.UtcNow, RequestId = requestId};
-//        var originalTimestamp = fakePermission.LastUpdatedAt;
+        // Act
+        var result = await repo.EmailExistsAsync("ghost@email.com");
 
-//        mockPermissionRepo.Setup(r => r.GetOneAsync(permissionId, default)).ReturnsAsync(fakePermission);
-//        mockPermissionRepo.Setup(r => r.UpdateAsync(permissionId, fakePermission, default)).ReturnsAsync(fakePermissionUpdate);
+        // Assert
+        Assert.False(result);
+    }
 
-//        //Act:
-//        var updateResult = await permissionService.UpdateAsync(permissionId, 1);
+    // ── PermissionService ─────────────────────────────────────────────────
 
+    [Fact]
+    public async Task GetAllByWorkerIdAsync_WithStatusFilter_ReturnsPendingOnly()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetAllByWorkerIdAsync_WithStatusFilter_ReturnsPendingOnly));
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
 
-//        //Assert:
-//        var returnedPermissionUpdate = Assert.IsType<Permission>(updateResult);
+        db.Requests.Add(new Request
+        {
+            Id = requestId,
+            WorkerId = workerId,
+            EmployerId = Guid.NewGuid(),
+            Reason = "test"
+        });
 
-//        //test permission status is approve/disapprove
-//        Assert.True(returnedPermissionUpdate.Status == (PermissionStatus)1);
+        db.Permissions.AddRange(
+            new Permission { WorkerId = workerId, RequestId = requestId, Status = PermissionStatus.Pending, LastUpdatedAt = DateTime.UtcNow },
+            new Permission { WorkerId = workerId, RequestId = requestId, Status = PermissionStatus.Pending, LastUpdatedAt = DateTime.UtcNow },
+            new Permission { WorkerId = workerId, RequestId = requestId, Status = PermissionStatus.Approved, LastUpdatedAt = DateTime.UtcNow }
+        );
+        await db.SaveChangesAsync();
 
-//        //test permission last_updated_at is updated
-//        Assert.True(returnedPermissionUpdate.LastUpdatedAt > originalTimestamp);
+        var repo = new PermissionRepoImpl(db);
+        var service = new PermissionServiceImpl(repo);
 
-//    }
+        // Act
+        var result = await service.GetAllByWorkerIdAsync(workerId, (int)PermissionStatus.Pending);
 
-//    private static AppDbContext CreateDbContext(String dbName)
-//    {
-//        var options = new DbContextOptionsBuilder<AppDbContext>()
-//        .UseInMemoryDatabase(dbName)
-//        .Options;
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.All(result, p => Assert.Equal(PermissionStatus.Pending, p.Status));
+    }
 
-//        return new AppDbContext(options);
-//    }
+    [Fact]
+    public async Task GetAllByWorkerIdAsync_NoFilter_ReturnsAll()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetAllByWorkerIdAsync_NoFilter_ReturnsAll));
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
 
-//    [Fact]
-//    public async Task GetAllWorkerById_ShouldReturnPermission()
-//    {
-//        //Arrange
-//        using var dbContext = CreateDbContext(nameof(GetAllWorkerById_ShouldReturnPermission));
+        db.Requests.Add(new Request
+        {
+            Id = requestId,
+            WorkerId = workerId,
+            EmployerId = Guid.NewGuid(),
+            Reason = "test"
+        });
 
-//        var workerId = Guid.NewGuid();
-//        var requestId = Guid.NewGuid();
-//        var reason = "Because I want your data";
+        db.Permissions.AddRange(
+            new Permission { WorkerId = workerId, RequestId = requestId, Status = PermissionStatus.Pending, LastUpdatedAt = DateTime.UtcNow },
+            new Permission { WorkerId = workerId, RequestId = requestId, Status = PermissionStatus.Approved, LastUpdatedAt = DateTime.UtcNow }
+        );
+        await db.SaveChangesAsync();
 
-//        dbContext.Permissions.AddRange( 
-//        new Permission
-//        {
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            Status = 0
-//        }, 
-//        new Permission
-//        {
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            Status = 0
-//        },
-//        new Permission
-//        {
-//            WorkerId = workerId,
-//            RequestId = requestId,
-//            Status = (PermissionStatus)1
-//        }
-//        );
+        var repo = new PermissionRepoImpl(db);
+        var service = new PermissionServiceImpl(repo);
 
-//        dbContext.Requests.AddRange(
-//        new Request
-//        {
-          
-//          WorkerId = workerId,
-//          Reason = reason,
-//          Id = requestId 
-//        },
-//        new Request
-//        {
-//            WorkerId = workerId,
-//            Reason = "just because",
-//            Id = Guid.NewGuid()
-//        }
-//        );
+        // Act
+        var result = await service.GetAllByWorkerIdAsync(workerId);
 
-//        await dbContext.SaveChangesAsync();
+        // Assert
+        Assert.Equal(2, result.Count);
+    }
 
-//        var permissionRepo = new PermissionRepoImpl(dbContext);
-//        var permissionService = new PermissionServiceImpl(permissionRepo);
+    [Fact]
+    public async Task UpdateAsync_ChangesStatusAndTimestamp()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(UpdateAsync_ChangesStatusAndTimestamp));
+        var workerId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        var originalTimestamp = DateTime.UtcNow.AddSeconds(-10);
 
-//        var requestRepo = new RequestRepoImpl(dbContext);
-//        var requestService = new RequestServiceImpl(requestRepo);
+        db.Requests.Add(new Request
+        {
+            Id = requestId,
+            WorkerId = workerId,
+            EmployerId = Guid.NewGuid(),
+            Reason = "test"
+        });
 
-//        //Act
-//        var resultPermission = await permissionService.GetAllByWorkerIdAsync(workerId, 0);
-//        var resultRequest = await requestService.GetByRequestIdAsync(requestId);
+        db.Permissions.Add(new Permission
+        {
+            Id = permissionId,
+            WorkerId = workerId,
+            RequestId = requestId,
+            Status = PermissionStatus.Pending,
+            LastUpdatedAt = originalTimestamp
+        });
+        await db.SaveChangesAsync();
 
-//        //Assert
-//        Assert.All(resultPermission, returnedPermission => Assert.True(returnedPermission.Status == 0));
-//        Assert.Equal(2, resultPermission.Count);
+        var repo = new PermissionRepoImpl(db);
+        var service = new PermissionServiceImpl(repo);
 
-//        Assert.True(resultRequest.Id == requestId);
-//        Assert.Equal(reason,resultRequest.Reason);
-//    }
+        // Act
+        var result = await service.UpdateAsync(permissionId, (int)PermissionStatus.Approved);
 
-//    [Fact]
-//    public async Task Update_ChangePermissionStatus()
-//    {
-//       //Arrange
-//        using var dbContext = CreateDbContext(nameof(GetAllWorkerById_ShouldReturnPermission));
+        // Assert
+        Assert.Equal(PermissionStatus.Approved, result.Status);
+        Assert.True(result.LastUpdatedAt > originalTimestamp);
+    }
 
-//        var workerId = Guid.NewGuid();
-//        var permissionId = Guid.NewGuid();
-//        var originalTimestamp = DateTime.UtcNow.AddSeconds(-1);
+    [Fact]
+    public async Task UpdateAsync_TerminalStatus_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(UpdateAsync_TerminalStatus_ThrowsInvalidOperationException));
+        var permissionId = Guid.NewGuid();
+        var workerId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
 
-//        dbContext.Permissions.AddRange( 
-//        new Permission
-//        {   
-//            Id = permissionId,
-//            WorkerId = workerId,
-//            LastUpdatedAt = originalTimestamp,
-//            Status = 0
-//        }, 
-//        new Permission
-//        {   
-//            Id = Guid.NewGuid(),
-//            WorkerId = workerId,
-//            LastUpdatedAt = DateTime.UtcNow,
-//            Status = 0
-//        }
-//        );
+        db.Requests.Add(new Request
+        {
+            Id = requestId,
+            WorkerId = workerId,
+            EmployerId = Guid.NewGuid(),
+            Reason = "test"
+        });
 
-//        await dbContext.SaveChangesAsync();
-//        var permissionRepo = new PermissionRepoImpl(dbContext);
-//        var permissionService = new PermissionServiceImpl(permissionRepo);
+        db.Permissions.Add(new Permission
+        {
+            Id = permissionId,
+            WorkerId = workerId,
+            RequestId = requestId,
+            Status = PermissionStatus.Rejected,
+            LastUpdatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
 
-//       //Act
-//       var result = await permissionService.UpdateAsync(permissionId, 1);
+        var repo = new PermissionRepoImpl(db);
+        var service = new PermissionServiceImpl(repo);
 
-//       //Assert
-//       Assert.True(result.Status == (PermissionStatus)1);
-//       Assert.True(result.LastUpdatedAt > originalTimestamp);
-//    }
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateAsync(permissionId, (int)PermissionStatus.Approved));
+    }
 
+    // ── RequestService ────────────────────────────────────────────────────
 
+    [Fact]
+    public async Task GetByRequestIdAsync_Exists_ReturnsRequest()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetByRequestIdAsync_Exists_ReturnsRequest));
+        var requestId = Guid.NewGuid();
+        var reason = "Need your data";
 
-//}
+        db.Requests.Add(new Request
+        {
+            Id = requestId,
+            WorkerId = Guid.NewGuid(),
+            EmployerId = Guid.NewGuid(),
+            Reason = reason
+        });
+        await db.SaveChangesAsync();
+
+        var repo = new RequestRepoImpl(db);
+        var service = new RequestServiceImpl(repo);
+
+        // Act
+        var result = await service.GetByRequestIdAsync(requestId);
+
+        // Assert
+        Assert.Equal(requestId, result.Id);
+        Assert.Equal(reason, result.Reason);
+    }
+
+    [Fact]
+    public async Task GetByRequestIdAsync_NotExists_ThrowsKeyNotFoundException()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetByRequestIdAsync_NotExists_ThrowsKeyNotFoundException));
+        var repo = new RequestRepoImpl(db);
+        var service = new RequestServiceImpl(repo);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => service.GetByRequestIdAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetAllByWorkerIdAsync_ReturnsCorrectRequests()
+    {
+        // Arrange
+        using var db = CreateDbContext(nameof(GetAllByWorkerIdAsync_ReturnsCorrectRequests));
+        var workerId = Guid.NewGuid();
+
+        db.Requests.AddRange(
+            new Request { WorkerId = workerId, EmployerId = Guid.NewGuid(), Reason = "reason 1" },
+            new Request { WorkerId = workerId, EmployerId = Guid.NewGuid(), Reason = "reason 2" },
+            new Request { WorkerId = Guid.NewGuid(), EmployerId = Guid.NewGuid(), Reason = "other worker" }
+        );
+        await db.SaveChangesAsync();
+
+        var repo = new RequestRepoImpl(db);
+        var service = new RequestServiceImpl(repo);
+
+        // Act
+        var result = await service.GetAllByWorkerIdAsync(workerId);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.All(result, r => Assert.Equal(workerId, r.WorkerId));
+    }
+}

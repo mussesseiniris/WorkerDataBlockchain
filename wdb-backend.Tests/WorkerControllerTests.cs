@@ -1,268 +1,237 @@
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Moq;
-//using System.Security.Claims;
-//using wdb_backend.Abstractions;
-//using wdb_backend.Common;
-//using wdb_backend.Controllers;
-//using wdb_backend.DTOs;
-//using wdb_backend.Models;
 
-//namespace wdb_backend.Tests;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using System.Security.Claims;
+using wdb_backend.Abstractions;
+using wdb_backend.Common;
+using wdb_backend.Controllers;
+using wdb_backend.DTOs;
+using wdb_backend.Models;
 
-//public class WorkerControllerTests
-//{
-//    private readonly Mock<IPermissionService> _mockPermission;
-//    private readonly Mock<IRequestService> _mockRequest;
-//    private readonly Mock<IWorkerInfoService> _mockWorkerInfo;
-//    private readonly Mock<IEmployerService> _mockEmployer;
-//    private readonly Mock<IActiveAccessService> _mockActiveAccessService;
-//    private readonly WorkerController _controller;
+namespace wdb_backend.Tests;
 
-//    public WorkerControllerTests()
-//    {
-//        _mockPermission = new Mock<IPermissionService>();
-//        _mockRequest = new Mock<IRequestService>();
-//        _mockWorkerInfo = new Mock<IWorkerInfoService>();
-//        _mockEmployer = new Mock<IEmployerService>();
-//        _mockActiveAccessService = new Mock<IActiveAccessService>();
+public class WorkerControllerTests
+{
+    private readonly Mock<IPermissionService> _mockPermission;
+    private readonly Mock<IRequestService> _mockRequest;
+    private readonly Mock<IWorkerInfoService> _mockWorkerInfo;
+    private readonly Mock<IEmployerService> _mockEmployer;
+    private readonly Mock<IActiveAccessService> _mockActiveAccess;
+    private readonly WorkerController _controller;
+    private readonly Guid _workerId = Guid.NewGuid();
 
-//        _controller = new WorkerController(
-//            _mockPermission.Object,
-//            _mockRequest.Object,
-//            _mockWorkerInfo.Object,
-//            _mockEmployer.Object,
-//            _mockActiveAccessService.Object
-//        );
-//    }
+    public WorkerControllerTests()
+    {
+        _mockPermission = new Mock<IPermissionService>();
+        _mockRequest = new Mock<IRequestService>();
+        _mockWorkerInfo = new Mock<IWorkerInfoService>();
+        _mockEmployer = new Mock<IEmployerService>();
+        _mockActiveAccess = new Mock<IActiveAccessService>();
 
-//    // --- GetPermissions ---
+        _controller = new WorkerController(
+            _mockPermission.Object,
+            _mockRequest.Object,
+            _mockWorkerInfo.Object,
+            _mockEmployer.Object,
+            _mockActiveAccess.Object
+        );
+    }
 
-//    [Fact]
-//    public async Task GetPermissions_ReturnsOk_WhenPermissionsExist()
-//    {
-//        var workerId = Guid.NewGuid();
+    // ── GetPermissions ────────────────────────────────────────────────────
 
-//        var permissions = new List<Permission>
-//        {
-//            new Permission
-//            {
-//                Status = PermissionStatus.Pending
-//            }
-//        };
+    [Fact]
+    public async Task GetPermissions_ReturnsOk_WhenPermissionsExist()
+    {
+        // Arrange
+        var permissions = new List<Permission>
+        {
+            new Permission { Id = Guid.NewGuid(), Status = PermissionStatus.Pending }
+        };
+        _mockPermission
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, 0, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(permissions);
 
-//        _mockPermission
-//            .Setup(service => service.GetAllByWorkerIdAsync(
-//                workerId,
-//                0,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(permissions);
+        // Act
+        var result = await _controller.GetPermissions(_workerId);
 
-//        var result = await _controller.GetPermissions(workerId);
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(permissions, ok.Value);
+    }
 
-//        var ok = Assert.IsType<OkObjectResult>(result.Result);
-//        Assert.Equal(permissions, ok.Value);
-//    }
+    [Fact]
+    public async Task GetPermissions_ReturnsNotFound_WhenNull()
+    {
+        // Arrange
+        _ = _mockPermission
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, 0, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<Permission>?)null);
 
-//    [Fact]
-//    public async Task GetPermissions_ReturnsNotFound_WhenNull()
-//    {
-//        var workerId = Guid.NewGuid();
+        // Act
+        var result = await _controller.GetPermissions(_workerId);
 
-//        _mockPermission
-//            .Setup(service => service.GetAllByWorkerIdAsync(
-//                workerId,
-//                0,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync((List<Permission>?)null);
+        // Assert
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
 
-//        var result = await _controller.GetPermissions(workerId);
+    // ── GetRequests ───────────────────────────────────────────────────────
 
-//        Assert.IsType<NotFoundObjectResult>(result.Result);
-//    }
+    [Fact]
+    public async Task GetRequests_ReturnsOk_WithMappedRows()
+    {
+        // Arrange
+        var requestId = Guid.NewGuid();
+        var employerId = Guid.NewGuid();
+        var permissionId = Guid.NewGuid();
+        var infoId = Guid.NewGuid();
 
-//    // --- GetAllWorkerInfo ---
+        var requests = new List<Request>
+        {
+            new Request
+            {
+                Id = requestId,
+                EmployerId = employerId,
+                WorkerId = _workerId,
+                Reason = "Employment check",
+                CreatedAt = DateTime.UtcNow
+            }
+        };
 
-//    [Fact]
-//    public async Task GetAllWorkerInfo_ReturnsOk_WhenInfoExists()
-//    {
-//        var workerId = Guid.NewGuid();
+        var permissions = new List<Permission>
+        {
+            new Permission
+            {
+                Id = permissionId,
+                RequestId = requestId,
+                InfoId = infoId,
+                Status = PermissionStatus.Pending
+            }
+        };
 
-//        var info = new List<WorkerInfo>
-//        {
-//            new WorkerInfo
-//            {
-//                Desc = "Job Title",
-//                Value = "Engineer"
-//            }
-//        };
+        var workerInfos = new List<WorkerInfo>
+        {
+            new WorkerInfo
+            {
+                Id = infoId,
+                CustomLabel = "Address",
+                Value = "Wellington",
+                Type = "text"
+            }
+        };
 
-//        _mockWorkerInfo
-//            .Setup(service => service.GetAllAsync(
-//                workerId,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(info);
+        var employer = new Employer { Id = employerId, Name = "Test Corp" };
 
-//        var result = await _controller.GetAllWorkerInfo(workerId);
+        _mockRequest
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(requests);
+        _mockPermission
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, -1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(permissions);
+        _mockWorkerInfo
+            .Setup(s => s.GetAllAsync(_workerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(workerInfos);
+        _mockEmployer
+            .Setup(s => s.GetEmployerInfoAsync(employerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employer);
 
-//        var ok = Assert.IsType<OkObjectResult>(result.Result);
-//        Assert.Equal(info, ok.Value);
-//    }
+        // Act
+        var result = await _controller.GetRequests(_workerId);
 
-//    [Fact]
-//    public async Task GetAllWorkerInfo_ReturnsNotFound_WhenNull()
-//    {
-//        var workerId = Guid.NewGuid();
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var rows = Assert.IsType<List<WorkerController.RequestRowResponse>>(ok.Value);
+        Assert.Single(rows);
+        Assert.Equal("Test Corp", rows[0].Company);
+        Assert.Equal("Employment check", rows[0].Reason);
+    }
 
-//        _mockWorkerInfo
-//            .Setup(service => service.GetAllAsync(
-//                workerId,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync((List<WorkerInfo>?)null);
+    [Fact]
+    public async Task GetRequests_ReturnsOk_WithEmptyList_WhenNoRequests()
+    {
+        // Arrange
+        _mockRequest
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Request>());
+        _mockPermission
+            .Setup(s => s.GetAllByWorkerIdAsync(_workerId, -1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Permission>());
+        _mockWorkerInfo
+            .Setup(s => s.GetAllAsync(_workerId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<WorkerInfo>());
 
-//        var result = await _controller.GetAllWorkerInfo(workerId);
+        // Act
+        var result = await _controller.GetRequests(_workerId);
 
-//        Assert.IsType<NotFoundObjectResult>(result.Result);
-//    }
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var rows = Assert.IsType<List<WorkerController.RequestRowResponse>>(ok.Value);
+        Assert.Empty(rows);
+    }
 
-//    // --- GetRows ---
+    // ── GetActiveAccess ───────────────────────────────────────────────────
 
-//    [Fact]
-//    public async Task GetRows_ReturnsUnauthorized_WhenNoIdentityClaim()
-//    {
-//        _controller.ControllerContext = new ControllerContext
-//        {
-//            HttpContext = new DefaultHttpContext()
-//        };
+    [Fact]
+    public async Task GetActiveAccess_ReturnsOk_WithEmptyList()
+    {
+        // Arrange
+        _mockActiveAccess
+            .Setup(s => s.GetActiveAccessAsync(_workerId, null, null))
+            .ReturnsAsync(new List<ActiveAccessDto>());
 
-//        var result = await _controller.GetRows();
+        // Act
+        var result = await _controller.GetActiveAccess(_workerId);
 
-//        Assert.IsType<UnauthorizedResult>(result);
-//    }
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<List<ActiveAccessDto>>(ok.Value);
+        Assert.Empty(value);
+    }
 
-//    [Fact]
-//    public async Task GetRows_ReturnsOk_WhenValidUser()
-//    {
-//        var workerId = Guid.NewGuid();
+    [Fact]
+    public async Task GetActiveAccess_WithFilters_CallsServiceWithCorrectParams()
+    {
+        // Arrange
+        var company = "TestCorp";
+        var dataType = "address";
 
-//        SetUserClaim(_controller, workerId);
+        var expected = new List<ActiveAccessDto>
+        {
+            new ActiveAccessDto
+            {
+                RequestId = Guid.NewGuid(),
+                CompanyName = "TestCorp",
+                GrantedAt = DateTime.UtcNow,
+                Reason = "Onboarding",
+                WorkerInfo = new List<ActiveAccessInfoDto>
+                {
+                    new ActiveAccessInfoDto
+                    {
+                        PermissionId = Guid.NewGuid(),
+                        DataType = "address",
+                        Category = "personal",
+                        CategoryLabel = "Address"
+                    }
+                }
+            }
+        };
 
-//        _mockRequest
-//            .Setup(service => service.GetAllByWorkerIdAsync(
-//                workerId,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(new List<Request>());
+        _mockActiveAccess
+            .Setup(s => s.GetActiveAccessAsync(_workerId, company, dataType))
+            .ReturnsAsync(expected);
 
-//        _mockWorkerInfo
-//            .Setup(service => service.GetAllAsync(
-//                workerId,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(new List<WorkerInfo>());
+        // Act
+        var result = await _controller.GetActiveAccess(_workerId, company, dataType);
 
-//        _mockPermission
-//            .Setup(service => service.GetAllByWorkerIdAsync(
-//                workerId,
-//                0,
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(new List<Permission>());
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<List<ActiveAccessDto>>(ok.Value);
+        Assert.Single(value);
+        Assert.Equal("TestCorp", value[0].CompanyName);
+        Assert.Equal("address", value[0].WorkerInfo[0].DataType);
 
-//        _mockEmployer
-//            .Setup(service => service.GetDistinctEmployers(
-//                It.IsAny<CancellationToken>()))
-//            .ReturnsAsync(new List<Employer>());
-
-//        var result = await _controller.GetRows();
-
-//        Assert.IsType<OkObjectResult>(result);
-//    }
-
-//    // --- GetActiveAccess ---
-
-//    [Fact]
-//    public async Task GetActiveAccess_ReturnsOk_WithEmptyList_WhenNoActiveAccess()
-//    {
-//        var workerId = Guid.NewGuid();
-
-//        _mockActiveAccessService
-//            .Setup(service => service.GetActiveAccessAsync(
-//                workerId,
-//                null,
-//                null))
-//            .ReturnsAsync(new List<ActiveAccessDto>());
-
-//        var result = await _controller.GetActiveAccess(workerId);
-
-//        var ok = Assert.IsType<OkObjectResult>(result.Result);
-//        var value = Assert.IsType<List<ActiveAccessDto>>(ok.Value);
-
-//        Assert.Empty(value);
-//    }
-
-//    [Fact]
-//    public async Task GetActiveAccess_CallsActiveAccessService_WithFilters()
-//    {
-//        var workerId = Guid.NewGuid();
-//        var company = "first";
-//        var dataType = "country";
-
-//        var expectedResult = new List<ActiveAccessDto>
-//        {
-//            new ActiveAccessDto
-//            {
-//                RequestId = Guid.NewGuid(),
-//                CompanyName = "firstste",
-//                GrantedAt = DateTime.UtcNow,
-//                Reason = "Employment onboarding",
-//                WorkerInfo = new List<ActiveAccessInfoDto>
-//                {
-//                    new ActiveAccessInfoDto
-//                    {
-//                        PermissionId = Guid.NewGuid(),
-//                        DataType = "country"
-//                    }
-//                }
-//            }
-//        };
-
-//        _mockActiveAccessService
-//            .Setup(service => service.GetActiveAccessAsync(
-//                workerId,
-//                company,
-//                dataType))
-//            .ReturnsAsync(expectedResult);
-
-//        var result = await _controller.GetActiveAccess(workerId, company, dataType);
-
-//        var ok = Assert.IsType<OkObjectResult>(result.Result);
-//        var value = Assert.IsType<List<ActiveAccessDto>>(ok.Value);
-
-//        Assert.Single(value);
-//        Assert.Equal("firstste", value[0].CompanyName);
-//        Assert.Equal("country", value[0].WorkerInfo[0].DataType);
-
-//        _mockActiveAccessService.Verify(
-//            service => service.GetActiveAccessAsync(workerId, company, dataType),
-//            Times.Once);
-//    }
-
-//    // --- Helpers ---
-
-//    private static void SetUserClaim(WorkerController controller, Guid workerId)
-//    {
-//        var claims = new List<Claim>
-//        {
-//            new Claim(ClaimTypes.NameIdentifier, workerId.ToString())
-//        };
-
-//        var identity = new ClaimsIdentity(claims, "test");
-//        var principal = new ClaimsPrincipal(identity);
-
-//        controller.ControllerContext = new ControllerContext
-//        {
-//            HttpContext = new DefaultHttpContext
-//            {
-//                User = principal
-//            }
-//        };
-//    }
-//}
+        _mockActiveAccess.Verify(
+            s => s.GetActiveAccessAsync(_workerId, company, dataType),
+            Times.Once);
+    }
+}
